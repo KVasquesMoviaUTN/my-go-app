@@ -186,3 +186,25 @@ sequenceDiagram
 - **`internal/adapters`**: Implementations of the ports (Binance, Ethereum, Blockchain).
 - **`internal/observability`**: Prometheus metrics definitions.
 - **`docs`**: This documentation.
+
+## 5. Design Patterns Used
+
+### 1. Hexagonal Architecture (Ports & Adapters)
+- **Pattern**: Separation of core business logic (`internal/core`) from external infrastructure (`internal/adapters`).
+- **Usage**: The `Manager` depends only on interfaces (`ExchangeAdapter`, `PriceProvider`), not on concrete implementations like `BinanceAdapter`. This allows easy swapping of exchanges or mocking for tests.
+
+### 2. Worker Pool Pattern
+- **Pattern**: Limiting the number of concurrent tasks to prevent resource exhaustion.
+- **Usage**: The `Manager` uses a buffered channel semaphore (`sem`) to limit the number of blocks processed concurrently. If the pool is full, new blocks are dropped to prioritize freshness over completeness (crucial for arbitrage).
+
+### 3. Dependency Injection
+- **Pattern**: Passing dependencies to an object rather than creating them internally.
+- **Usage**: The `NewManager` constructor accepts `ExchangeAdapter`, `PriceProvider`, and `BlockchainListener` as arguments. This facilitates testing by allowing the injection of mocks.
+
+### 4. Adapter Pattern
+- **Pattern**: Converting the interface of a class into another interface clients expect.
+- **Usage**: `BinanceAdapter` and `EthereumAdapter` adapt the specific APIs of Binance and Uniswap into the generic `ExchangeAdapter` and `PriceProvider` interfaces used by the domain.
+
+### 5. Graceful Shutdown
+- **Pattern**: Catching OS signals to clean up resources before exiting.
+- **Usage**: The `main` function listens for `SIGINT` and `SIGTERM` to cancel the context, allowing the `Manager` and `Listener` to stop processing and close connections cleanly.
