@@ -6,6 +6,22 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export default function SpreadChart() {
 	const chartData = useStore((state) => state.chartData);
 
+	const gradientOffset = () => {
+		const dataMax = Math.max(...chartData.map((i) => i.spread));
+		const dataMin = Math.min(...chartData.map((i) => i.spread));
+
+		if (dataMax <= 0) {
+			return 0;
+		}
+		if (dataMin >= 0) {
+			return 1;
+		}
+
+		return dataMax / (dataMax - dataMin);
+	};
+
+	const off = gradientOffset();
+
 	return (
 		<div className="h-full flex flex-col bg-slate-950 rounded-lg border border-slate-800 overflow-hidden">
 			<div className="px-4 py-2 bg-slate-900 border-b border-slate-800">
@@ -34,11 +50,17 @@ export default function SpreadChart() {
 							itemStyle={{ color: '#34d399' }}
 							labelStyle={{ color: '#94a3b8' }}
 						/>
+						<defs>
+							<linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
+								<stop offset={off} stopColor="#10b981" stopOpacity={1} />
+								<stop offset={off} stopColor="#ef4444" stopOpacity={1} />
+							</linearGradient>
+						</defs>
 						<ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="3 3" />
 						<Line
 							type="monotone"
 							dataKey="spread"
-							stroke="#10b981"
+							stroke="url(#splitColor)"
 							strokeWidth={2}
 							dot={false}
 							activeDot={{ r: 4, fill: '#10b981' }}
