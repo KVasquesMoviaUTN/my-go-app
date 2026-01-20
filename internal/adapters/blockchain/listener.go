@@ -3,9 +3,9 @@ package blockchain
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"time"
 
+	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/domain"
 	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/ports"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -21,8 +21,8 @@ func NewListener(clientURL string) ports.BlockchainListener {
 	}
 }
 
-func (l *Listener) SubscribeNewHeads(ctx context.Context) (<-chan *big.Int, <-chan error, error) {
-	out := make(chan *big.Int)
+func (l *Listener) SubscribeNewHeads(ctx context.Context) (<-chan *domain.Block, <-chan error, error) {
+	out := make(chan *domain.Block)
 	errChan := make(chan error)
 
 	go func() {
@@ -94,8 +94,12 @@ func (l *Listener) SubscribeNewHeads(ctx context.Context) (<-chan *big.Int, <-ch
 						client.Close()
 						break connLoop
 					case header := <-headers:
+						block := &domain.Block{
+							Number:    header.Number,
+							Timestamp: time.Unix(int64(header.Time), 0),
+						}
 						select {
-						case out <- header.Number:
+						case out <- block:
 						case <-ctx.Done():
 							sub.Unsubscribe()
 							client.Close()

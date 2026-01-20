@@ -13,6 +13,11 @@ type OrderBook struct {
 	Timestamp time.Time
 }
 
+type Block struct {
+	Number    *big.Int
+	Timestamp time.Time
+}
+
 // CalculateEffectivePrice calculates the average price to fill the given amount.
 // Returns the average price and true if the amount can be filled, or 0 and false if not enough liquidity.
 func (ob *OrderBook) CalculateEffectivePrice(side string, amount decimal.Decimal) (decimal.Decimal, bool) {

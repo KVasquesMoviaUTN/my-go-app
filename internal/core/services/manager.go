@@ -67,26 +67,33 @@ func (m *Manager) Start(ctx context.Context) error {
 			return nil
 		case err := <-errChan:
 			slog.Error("Listener error", "error", err)
-		case blockNum := <-blockChan:
+		case block := <-blockChan:
 			observability.BlocksProcessed.Inc()
 			select {
 			case m.sem <- struct{}{}:
 				observability.ActiveWorkers.Inc()
-				go func(bn *big.Int) {
+				go func(b *domain.Block) {
 					defer func() { 
 						<-m.sem 
 						observability.ActiveWorkers.Dec()
 					}()
-					m.processBlock(ctx, bn)
-				}(blockNum)
+					m.processBlock(ctx, b)
+				}(block)
 			default:
-				slog.Warn("Worker pool full, skipping block", "block", blockNum)
+				slog.Warn("Worker pool full, skipping block", "block", block.Number)
 			}
 		}
 	}
 }
 
-func (m *Manager) processBlock(ctx context.Context, blockNum *big.Int) {
+func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
+	// Circuit Breaker: Check for stale blocks
+	if time.Since(block.Timestamp) > 20*time.Second {
+		slog.Warn("Circuit Breaker: Skipping stale block", "block", block.Number, "age", time.Since(block.Timestamp))
+		return
+	}
+
+	blockNum := block.Number
 	m.mu.RLock()
 	if m.lastBlock != nil && m.lastBlock.Cmp(blockNum) == 0 {
 		m.mu.RUnlock()

@@ -72,10 +72,10 @@ func TestManager_ProcessBlock(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	blockChan := make(chan *big.Int)
+	blockChan := make(chan *domain.Block)
 	errChan := make(chan error)
 	
-	mockListener.On("SubscribeNewHeads", ctx).Return((<-chan *big.Int)(blockChan), (<-chan error)(errChan), nil)
+	mockListener.On("SubscribeNewHeads", ctx).Return((<-chan *domain.Block)(blockChan), (<-chan error)(errChan), nil)
 
 	// Run Manager in goroutine
 	go func() {
@@ -83,7 +83,10 @@ func TestManager_ProcessBlock(t *testing.T) {
 	}()
 
 	// Send a block
-	blockChan <- big.NewInt(100)
+	blockChan <- &domain.Block{
+		Number:    big.NewInt(100),
+		Timestamp: time.Now(),
+	}
 
 	// Wait a bit for processing
 	time.Sleep(100 * time.Millisecond)

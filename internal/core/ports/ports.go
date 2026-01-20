@@ -27,8 +27,8 @@ type PriceProvider interface {
 // BlockchainListener defines the interface for listening to blockchain events.
 type BlockchainListener interface {
 	// SubscribeNewHeads subscribes to new block headers.
-	// It returns a channel that emits block numbers (or headers) and an error channel.
-	SubscribeNewHeads(ctx context.Context) (<-chan *big.Int, <-chan error, error)
+	// It returns a channel that emits blocks and an error channel.
+	SubscribeNewHeads(ctx context.Context) (<-chan *domain.Block, <-chan error, error)
 }
 
 // NotificationService defines the interface for broadcasting events to clients.
