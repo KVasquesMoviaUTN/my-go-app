@@ -10,10 +10,10 @@ export default function Dashboard() {
   useArbitrageSocket();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30">
       <Header />
 
-      <main className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-80px)]">
+      <main className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-140px)]">
         {/* Left Column: Chart */}
         <div className="h-[400px] lg:h-auto">
           <SpreadChart />
