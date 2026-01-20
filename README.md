@@ -55,6 +55,22 @@ export TRADE_SIZES="1000000000000000000,10000000000000000000" # 1 ETH, 10 ETH (i
 go run cmd/bot/main.go
 ```
 
+### Docker (Recommended)
+
+Run the bot and Prometheus with a single command:
+
+```bash
+# Export your keys first
+export ETH_NODE_WS="wss://..."
+export ETH_NODE_HTTP="https://..."
+
+# Start services
+docker-compose up --build -d
+```
+
+- **Bot Metrics**: `http://localhost:9090/metrics`
+- **Prometheus UI**: `http://localhost:9091`
+
 ## 📂 Project Structure
 
 ```

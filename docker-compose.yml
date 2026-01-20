@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: arbitrage-bot
+    restart: unless-stopped
+    environment:
+      - ETH_NODE_WS=${ETH_NODE_WS}
+      - ETH_NODE_HTTP=${ETH_NODE_HTTP}
+      - SYMBOL=ETHUSDC
+      - MIN_PROFIT=10.0
+      - TRADE_SIZES=1000000000000000000,10000000000000000000
+    ports:
+      - "9090:9090"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9091:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'

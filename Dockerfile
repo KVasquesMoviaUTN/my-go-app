@@ -1,0 +1,28 @@
+# Build Stage
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /app
+
+# Install dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source
+COPY . .
+
+# Build binary
+# CGO_ENABLED=0 for static binary
+RUN CGO_ENABLED=0 GOOS=linux go build -o bot cmd/bot/main.go
+
+# Run Stage
+FROM gcr.io/distroless/static-debian12
+
+WORKDIR /app
+
+COPY --from=builder /app/bot .
+
+# Expose metrics port
+EXPOSE 9090
+
+# Run
+CMD ["./bot"]
