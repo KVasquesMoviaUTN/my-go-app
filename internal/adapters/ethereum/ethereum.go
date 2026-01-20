@@ -140,3 +140,7 @@ func (a *Adapter) GetQuote(ctx context.Context, tokenIn, tokenOut string, amount
 		Timestamp: time.Now(),
 	}, nil
 }
+
+func (a *Adapter) GetGasPrice(ctx context.Context) (*big.Int, error) {
+	return a.client.SuggestGasPrice(ctx)
+}

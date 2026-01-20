@@ -62,7 +62,15 @@ export default function LiveFeed() {
 								"col-span-3 text-right font-bold",
 								(event.data?.estimatedProfit || 0) > 0 ? "text-emerald-400" : "text-red-400"
 							)}>
-								+${event.data?.estimatedProfit.toFixed(2)}
+								<div className="text-xs text-slate-500 font-normal">
+									Gross: ${((event.data?.estimatedProfit || 0) + (event.data?.gasCost || 0)).toFixed(2)}
+								</div>
+								<div className="text-xs text-slate-500 font-normal">
+									Gas: -${(event.data?.gasCost || 0).toFixed(2)}
+								</div>
+								<div>
+									Net: ${(event.data?.estimatedProfit || 0).toFixed(2)}
+								</div>
 							</div>
 						</div>
 					);

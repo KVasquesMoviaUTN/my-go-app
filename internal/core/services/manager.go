@@ -111,12 +111,23 @@ func (m *Manager) processBlock(ctx context.Context, blockNum *big.Int) {
 	g, ctx := errgroup.WithContext(ctx)
 	
 	var ob *domain.OrderBook
+	var gasPrice *big.Int
 
 	g.Go(func() error {
 		var err error
 		ob, err = m.cex.GetOrderBook(ctx, m.cfg.Symbol)
 		if err != nil {
 			return fmt.Errorf("cex fetch failed: %w", err)
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		var err error
+		gasPrice, err = m.dex.GetGasPrice(ctx)
+		if err != nil {
+			slog.Warn("failed to fetch gas price, using default", "err", err)
+			gasPrice = big.NewInt(30000000000) // 30 gwei default
 		}
 		return nil
 	})
@@ -149,11 +160,11 @@ func (m *Manager) processBlock(ctx context.Context, blockNum *big.Int) {
 		if res.quote == nil {
 			continue
 		}
-		m.checkArbitrageWithData(ctx, blockNum, ob, res.amt, res.quote)
+		m.checkArbitrageWithData(ctx, blockNum, ob, res.amt, res.quote, gasPrice)
 	}
 }
 
-func (m *Manager) checkArbitrageWithData(ctx context.Context, blockNum *big.Int, ob *domain.OrderBook, amountIn *big.Int, pq *domain.PriceQuote) {
+func (m *Manager) checkArbitrageWithData(ctx context.Context, blockNum *big.Int, ob *domain.OrderBook, amountIn *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) {
 	amtIn := decimal.NewFromBigInt(amountIn, -m.cfg.TokenInDec)
 	amtOut := pq.Price.Mul(decimal.NewFromFloat(1).Div(decimal.New(1, m.cfg.TokenOutDec)))
 	
@@ -180,8 +191,12 @@ func (m *Manager) checkArbitrageWithData(ctx context.Context, blockNum *big.Int,
 	cexCost := cexPrice.Mul(amtIn).Mul(decimal.NewFromFloat(1).Add(cexFee))
 	
 	gasUsed := decimal.NewFromBigInt(pq.GasEstimate, 0)
-	gasPrice := decimal.NewFromFloat(30).Mul(decimal.NewFromFloat(1e-9)) // 30 gwei
-	gasCost := gasUsed.Mul(gasPrice).Mul(cexPrice) // value gas in USDC
+	// gasPrice := decimal.NewFromFloat(30).Mul(decimal.NewFromFloat(1e-9)) // 30 gwei
+	// gasCost := gasUsed.Mul(gasPrice).Mul(cexPrice) // value gas in USDC
+	
+	// Gas Price is in Wei. Convert to ETH (1e-18), then multiply by CEX Price (USDC/ETH) to get Gas Cost in USDC.
+	gasPriceEth := decimal.NewFromBigInt(gasPriceWei, -18)
+	gasCost := gasUsed.Mul(gasPriceEth).Mul(cexPrice)
 	
 	netDex := amtOut.Sub(gasCost)
 	profit := netDex.Sub(cexCost)
