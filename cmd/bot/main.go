@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"log/slog"
 	"math/big"
@@ -61,20 +62,14 @@ func main() {
 	}
 
 	tradeSizesStr := viper.GetString("TRADE_SIZES")
-	// Split by comma and parse
-	// For simplicity in this scaffold, let's just parse the default string or assume comma separated
-	// In a real app, we'd use a helper.
-	// Let's just hardcode a few for now if parsing is complex, or do a simple split.
-	// Actually, viper.GetStringSlice might work if env var is set correctly, but defaults are tricky.
-	// Let's just parse the string manually.
-	
-	sizes := strings.Split(tradeSizesStr, ",")
-	for _, s := range sizes {
-		amt, ok := new(big.Int).SetString(strings.TrimSpace(s), 10)
-		if ok {
-			cfg.TradeSizes = append(cfg.TradeSizes, amt)
-		}
+	tradeSizes, err := parseTradeSizes(tradeSizesStr)
+	if err != nil {
+		slog.Warn("Failed to parse some trade sizes", "error", err)
 	}
+	if len(tradeSizes) == 0 {
+		log.Fatal("No valid TRADE_SIZES configured")
+	}
+	cfg.TradeSizes = tradeSizes
 
 	minProfitStr := viper.GetString("MIN_PROFIT")
 	minProfit, err := decimal.NewFromString(minProfitStr)
@@ -115,4 +110,24 @@ func main() {
 	} else {
 		log.Println("Manager finished successfully")
 	}
+}
+
+func parseTradeSizes(input string) ([]*big.Int, error) {
+	var sizes []*big.Int
+	parts := strings.Split(input, ",")
+	
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		
+		val, ok := new(big.Int).SetString(p, 10)
+		if !ok {
+			return sizes, fmt.Errorf("invalid trade size value: %s", p)
+		}
+		sizes = append(sizes, val)
+	}
+	
+	return sizes, nil
 }
