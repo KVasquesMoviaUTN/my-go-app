@@ -16,6 +16,7 @@ import (
 	"github.com/KVasquesMoviaUTN/my-go-app/internal/adapters/binance"
 	"github.com/KVasquesMoviaUTN/my-go-app/internal/adapters/blockchain"
 	"github.com/KVasquesMoviaUTN/my-go-app/internal/adapters/ethereum"
+	"github.com/KVasquesMoviaUTN/my-go-app/internal/adapters/websocket"
 	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/services"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -95,7 +96,10 @@ func main() {
 
 	listener := blockchain.NewListener(viper.GetString("ETH_NODE_WS"))
 
-	manager := services.NewManager(cfg, cexAdapter, dexAdapter, listener)
+	wsServer := websocket.NewServer()
+	wsServer.Start(":8080")
+
+	manager := services.NewManager(cfg, cexAdapter, dexAdapter, listener, wsServer)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

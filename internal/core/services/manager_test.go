@@ -18,6 +18,7 @@ func TestManager_ProcessBlock(t *testing.T) {
 	mockCEX := new(mocks.MockExchangeAdapter)
 	mockDEX := new(mocks.MockPriceProvider)
 	mockListener := new(mocks.MockBlockchainListener)
+	mockNotifier := new(mocks.MockNotificationService)
 
 	cfg := services.Config{
 		Symbol:        "ETHUSDC",
@@ -32,7 +33,7 @@ func TestManager_ProcessBlock(t *testing.T) {
 		CacheDuration: time.Second,
 	}
 
-	manager := services.NewManager(cfg, mockCEX, mockDEX, mockListener)
+	manager := services.NewManager(cfg, mockCEX, mockDEX, mockListener, mockNotifier)
 
 	// Test Data
 	amountIn := cfg.TradeSizes[0] // 1 ETH
@@ -60,6 +61,7 @@ func TestManager_ProcessBlock(t *testing.T) {
 	// Expectations
 	mockCEX.On("GetOrderBook", mock.Anything, "ETHUSDC").Return(ob, nil)
 	mockDEX.On("GetQuote", mock.Anything, "0xWETH", "0xUSDC", amountIn, int64(3000)).Return(pq, nil)
+	mockNotifier.On("Broadcast", mock.Anything).Return()
 
 	// We can't easily test the private processBlock method directly unless we export it or trigger it via Start.
 	// However, for unit testing logic, it's better to test the logic method if possible.
@@ -88,4 +90,5 @@ func TestManager_ProcessBlock(t *testing.T) {
 	// Verify expectations
 	mockCEX.AssertExpectations(t)
 	mockDEX.AssertExpectations(t)
+	mockNotifier.AssertExpectations(t)
 }

@@ -67,3 +67,19 @@ type ArbitrageOpportunity struct {
 	Profit     decimal.Decimal
 	Timestamp  time.Time
 }
+
+type TradeData struct {
+	CexPrice        float64 `json:"cexPrice"`
+	DexPrice        float64 `json:"dexPrice"`
+	SpreadPct       float64 `json:"spreadPct"`
+	EstimatedProfit float64 `json:"estimatedProfit"`
+	GasCost         float64 `json:"gasCost"`
+	Symbol          string  `json:"symbol"`
+}
+
+type ArbitrageEvent struct {
+	Type        string     `json:"type"` // "HEARTBEAT" | "OPPORTUNITY"
+	BlockNumber uint64     `json:"blockNumber"`
+	Timestamp   time.Time  `json:"timestamp"`
+	Data        *TradeData `json:"data,omitempty"`
+}

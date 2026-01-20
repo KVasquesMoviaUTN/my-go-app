@@ -3,15 +3,34 @@
 /main
 *.exe
 *.dll
+*.so
+*.dylib
+
+# Test Binaries
+*.test
+
+# Coverage
+*.out
+*.prof
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
 
 # OS Specific
 .DS_Store
 Thumbs.db
+.AppleDouble
+.LSOverride
 
 # IDEs
 .idea/
 .vscode/
 *.swp
+*.swo
+*~
+*.iml
 
 # Go
 vendor/
@@ -19,6 +38,19 @@ go.work
 
 # Environment Variables
 .env
+.env.local
+.env.*.local
 
 # Logs
 *.log
+logs/
+
+# Temporary
+tmp/
+temp/
+
+# Dashboard (handled by its own .gitignore, but good to have backup)
+dashboard/.next/
+dashboard/node_modules/
+dashboard/out/
+dashboard/build/

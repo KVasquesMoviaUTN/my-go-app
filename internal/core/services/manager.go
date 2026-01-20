@@ -34,6 +34,7 @@ type Manager struct {
 	cex        ports.ExchangeAdapter
 	dex        ports.PriceProvider
 	listener   ports.BlockchainListener
+	notifier   ports.NotificationService
 	
 	// Caching
 	mu         sync.RWMutex
@@ -43,12 +44,13 @@ type Manager struct {
 	sem        chan struct{}
 }
 
-func NewManager(cfg Config, cex ports.ExchangeAdapter, dex ports.PriceProvider, listener ports.BlockchainListener) *Manager {
+func NewManager(cfg Config, cex ports.ExchangeAdapter, dex ports.PriceProvider, listener ports.BlockchainListener, notifier ports.NotificationService) *Manager {
 	return &Manager{
 		cfg:      cfg,
 		cex:      cex,
 		dex:      dex,
 		listener: listener,
+		notifier: notifier,
 		sem:      make(chan struct{}, cfg.MaxWorkers),
 	}
 }
@@ -100,6 +102,13 @@ func (m *Manager) processBlock(ctx context.Context, blockNum *big.Int) {
 	m.mu.Unlock()
 
 	slog.Info("new block", "height", blockNum)
+	
+	// Broadcast Heartbeat
+	m.notifier.Broadcast(domain.ArbitrageEvent{
+		Type:        "HEARTBEAT",
+		BlockNumber: blockNum.Uint64(),
+		Timestamp:   time.Now(),
+	})
 
 	g, ctx := errgroup.WithContext(ctx)
 	
@@ -159,8 +168,15 @@ func (m *Manager) checkArbitrageWithData(ctx context.Context, blockNum *big.Int,
 	}
 
 	spread := dexPrice.Sub(cexPrice).Div(cexPrice).Mul(decimal.NewFromFloat(100))
-	slog.Info(fmt.Sprintf("[DEBUG] Block %s: Binance %s | Uniswap %s | Spread %s%% | Size %s", 
-		blockNum, cexPrice.StringFixed(2), dexPrice.StringFixed(2), spread.StringFixed(2), amtIn.StringFixed(2)))
+	slog.Info("Market analysis complete",
+		"block", blockNum,
+		"binance_price", cexPrice.StringFixed(2),
+		"uniswap_price", dexPrice.StringFixed(2),
+		"spread_pct", spread.StringFixed(2),
+		"status", "no_opportunity",
+		"size", amtIn.StringFixed(2),
+		"size", amtIn.StringFixed(2),
+	)
 
 	cexFee := decimal.NewFromFloat(0.001)
 	cexCost := cexPrice.Mul(amtIn).Mul(decimal.NewFromFloat(1).Add(cexFee))
@@ -171,6 +187,27 @@ func (m *Manager) checkArbitrageWithData(ctx context.Context, blockNum *big.Int,
 	
 	netDex := amtOut.Sub(gasCost)
 	profit := netDex.Sub(cexCost)
+
+	// Broadcast Opportunity (or just telemetry)
+	cexPriceFloat, _ := cexPrice.Float64()
+	dexPriceFloat, _ := dexPrice.Float64()
+	spreadFloat, _ := spread.Float64()
+	profitFloat, _ := profit.Float64()
+	gasCostFloat, _ := gasCost.Float64()
+
+	m.notifier.Broadcast(domain.ArbitrageEvent{
+		Type:        "OPPORTUNITY",
+		BlockNumber: blockNum.Uint64(),
+		Timestamp:   time.Now(),
+		Data: &domain.TradeData{
+			CexPrice:        cexPriceFloat,
+			DexPrice:        dexPriceFloat,
+			SpreadPct:       spreadFloat,
+			EstimatedProfit: profitFloat,
+			GasCost:         gasCostFloat,
+			Symbol:          m.cfg.Symbol,
+		},
+	})
 	
 	if profit.GreaterThan(m.cfg.MinProfit) {
 		observability.ArbitrageOpsFound.Inc()

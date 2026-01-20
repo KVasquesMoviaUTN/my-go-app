@@ -27,3 +27,8 @@ type BlockchainListener interface {
 	// It returns a channel that emits block numbers (or headers) and an error channel.
 	SubscribeNewHeads(ctx context.Context) (<-chan *big.Int, <-chan error, error)
 }
+
+// NotificationService defines the interface for broadcasting events to clients.
+type NotificationService interface {
+	Broadcast(event domain.ArbitrageEvent)
+}

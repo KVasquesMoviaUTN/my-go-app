@@ -1,0 +1,90 @@
+package websocket
+
+import (
+	"log/slog"
+	"net/http"
+	"sync"
+
+	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/domain"
+	"github.com/gorilla/websocket"
+)
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Allow all origins for now (dev mode)
+	},
+}
+
+type Server struct {
+	clients   map[*websocket.Conn]bool
+	broadcast chan domain.ArbitrageEvent
+	mu        sync.RWMutex
+}
+
+func NewServer() *Server {
+	return &Server{
+		clients:   make(map[*websocket.Conn]bool),
+		broadcast: make(chan domain.ArbitrageEvent),
+	}
+}
+
+func (s *Server) Start(addr string) {
+	http.HandleFunc("/ws", s.handleConnections)
+	
+	go s.handleMessages()
+
+	slog.Info("WebSocket server starting", "addr", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		slog.Error("WebSocket server failed", "error", err)
+	}
+}
+
+func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		slog.Error("WS upgrade failed", "error", err)
+		return
+	}
+	defer ws.Close()
+
+	s.mu.Lock()
+	s.clients[ws] = true
+	s.mu.Unlock()
+
+	slog.Info("New WebSocket client connected")
+
+	// Keep connection alive
+	for {
+		_, _, err := ws.ReadMessage()
+		if err != nil {
+			s.mu.Lock()
+			delete(s.clients, ws)
+			s.mu.Unlock()
+			break
+		}
+	}
+}
+
+func (s *Server) handleMessages() {
+	for {
+		msg := <-s.broadcast
+		
+		s.mu.RLock()
+		for client := range s.clients {
+			err := client.WriteJSON(msg)
+			if err != nil {
+				slog.Error("WS write failed", "error", err)
+				client.Close()
+				// Note: We can't delete from map while iterating with RLock. 
+				// In a robust system, we'd collect dead clients and remove them later, 
+				// or use a dedicated loop for removal. 
+				// For simplicity here, we just close it and let the read loop handle removal.
+			}
+		}
+		s.mu.RUnlock()
+	}
+}
+
+func (s *Server) Broadcast(event domain.ArbitrageEvent) {
+	s.broadcast <- event
+}

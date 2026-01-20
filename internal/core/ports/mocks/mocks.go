@@ -58,3 +58,12 @@ func (m *MockBlockchainListener) SubscribeNewHeads(ctx context.Context) (<-chan 
 
 	return ch1, ch2, args.Error(2)
 }
+
+// MockNotificationService is a mock implementation of ports.NotificationService
+type MockNotificationService struct {
+	mock.Mock
+}
+
+func (m *MockNotificationService) Broadcast(event domain.ArbitrageEvent) {
+	m.Called(event)
+}
