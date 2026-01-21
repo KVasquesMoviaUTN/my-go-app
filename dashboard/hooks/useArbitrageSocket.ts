@@ -76,7 +76,8 @@ export function useArbitrageSocket() {
           spreadPct: (Math.random() * 2) - 1, // -1% to +1%
           estimatedProfit: (Math.random() * 100) - 20, // -20 to +80
           gasCost: 5 + Math.random() * 5,
-          symbol: 'ETH-USDC'
+          symbol: 'ETH-USDC',
+          direction: Math.random() > 0.5 ? 'CEX -> DEX' : 'DEX -> CEX'
         } : undefined
       };
 
