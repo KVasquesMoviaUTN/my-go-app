@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/services"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/engine"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/services"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/engine"
 	"github.com/joho/godotenv"
 	"github.com/shopspring/decimal"
 	"github.com/spf13/viper"

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/domain"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )

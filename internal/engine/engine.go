@@ -11,14 +11,14 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/adapters/binance"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/adapters/blockchain"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/adapters/ethereum"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/adapters/kraken"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/adapters/okx"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/adapters/websocket"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/ports"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/services"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/adapters/binance"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/adapters/blockchain"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/adapters/ethereum"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/adapters/kraken"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/adapters/okx"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/adapters/websocket"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/ports"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/services"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 

@@ -6,8 +6,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/ports"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/ports"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"golang.org/x/time/rate"

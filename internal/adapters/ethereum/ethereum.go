@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/ports"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/ports"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"

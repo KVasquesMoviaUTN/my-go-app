@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/domain"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )

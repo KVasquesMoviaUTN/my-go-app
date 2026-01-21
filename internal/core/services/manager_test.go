@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/ports/mocks"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/services"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/ports/mocks"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/services"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
 )

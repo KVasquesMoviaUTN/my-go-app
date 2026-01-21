@@ -1,4 +1,4 @@
-module github.com/KVasquesMoviaUTN/arbitrage-bot-go
+module github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge
 
 go 1.24.0
 

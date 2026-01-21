@@ -107,3 +107,118 @@ Access at `http://localhost:3000`.
 │       ├── ports       # Interfaces
 │       └── services    # Business logic (Manager)
 ```
+
+## 📊 Class Diagram
+
+```mermaid
+classDiagram
+    class Manager {
+        +Start(ctx) error
+        -processBlock(ctx, block)
+        -checkCexBuyDexSell(...)
+        -checkDexBuyCexSell(...)
+    }
+
+    class ExchangeAdapter {
+        <<interface>>
+        +GetOrderBook(ctx, symbol) OrderBook
+    }
+
+    class PriceProvider {
+        <<interface>>
+        +GetQuote(ctx, tokenIn, tokenOut, amount, fee) PriceQuote
+        +GetQuoteExactOutput(ctx, tokenIn, tokenOut, amount, fee) PriceQuote
+        +GetGasPrice(ctx) BigInt
+        +GetSlot0(ctx, tokenIn, tokenOut, fee) Slot0
+    }
+
+    class BlockchainListener {
+        <<interface>>
+        +SubscribeNewHeads(ctx) (<-chan Block, <-chan error, error)
+    }
+
+    class NotificationService {
+        <<interface>>
+        +Broadcast(event)
+    }
+
+    class BinanceAdapter {
+        +GetOrderBook(...)
+    }
+    class KrakenAdapter {
+        +GetOrderBook(...)
+    }
+    class OKXAdapter {
+        +GetOrderBook(...)
+    }
+
+    class EthereumAdapter {
+        +GetQuote(...)
+        +GetQuoteExactOutput(...)
+        +GetGasPrice(...)
+        +GetSlot0(...)
+    }
+
+    class Listener {
+        +SubscribeNewHeads(...)
+    }
+
+    class WebsocketServer {
+        +Broadcast(...)
+        +Start(addr)
+    }
+
+    Manager --> ExchangeAdapter
+    Manager --> PriceProvider
+    Manager --> BlockchainListener
+    Manager --> NotificationService
+
+    BinanceAdapter ..|> ExchangeAdapter
+    KrakenAdapter ..|> ExchangeAdapter
+    OKXAdapter ..|> ExchangeAdapter
+    EthereumAdapter ..|> PriceProvider
+    Listener ..|> BlockchainListener
+    WebsocketServer ..|> NotificationService
+```
+
+## 🏗 Architecture Diagram
+
+```mermaid
+graph TD
+    subgraph External Systems
+        ETH[Ethereum Node]
+        CEX[CEX API (Binance/Kraken/OKX)]
+        DEX[Uniswap V3 Quoter]
+    end
+
+    subgraph Core
+        L[Blockchain Listener]
+        M[Manager]
+        EA[Exchange Adapter]
+        DA[DEX Adapter]
+        PC[Profit Calculator]
+    end
+
+    subgraph Output
+        NS[Notification Service]
+        WS[WebSocket Server]
+        DB[Dashboard UI]
+    end
+
+    ETH -->|New Block Headers| L
+    L -->|Block Channel| M
+    M -->|Fetch OrderBook| EA
+    EA -->|HTTP REST| CEX
+    M -->|Fetch Quote/Gas| DA
+    DA -->|RPC Call| DEX
+    
+    EA -->|OrderBook Data| M
+    DA -->|Price Quote| M
+    
+    M -->|Data| PC
+    PC -->|Arbitrage Opportunity| M
+    
+    M -->|Broadcast Event| NS
+    NS -->|Push JSON| WS
+    WS -->|WebSocket| DB
+```

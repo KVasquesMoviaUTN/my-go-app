@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
-	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/ports"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/cex-dex-arbitrage-challenge/internal/core/ports"
 	"github.com/shopspring/decimal"
 	"github.com/sony/gobreaker"
 	"golang.org/x/time/rate"
