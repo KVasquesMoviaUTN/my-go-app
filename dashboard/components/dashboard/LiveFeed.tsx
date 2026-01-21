@@ -7,7 +7,6 @@ export default function LiveFeed() {
 
 	return (
 		<div className="flex flex-col h-full bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 rounded-xl border border-slate-700/50 overflow-hidden shadow-2xl">
-			{/* Header with gradient */}
 			<div className="relative px-4 py-3 bg-gradient-to-r from-slate-800 to-slate-900 border-b border-slate-700/50">
 				<div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-blue-500/5" />
 				<div className="relative flex justify-between items-center">
@@ -21,7 +20,6 @@ export default function LiveFeed() {
 				</div>
 			</div>
 
-			{/* Feed Content */}
 			<div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
 				{events.length === 0 && (
 					<div className="flex flex-col items-center justify-center h-full text-slate-500">
@@ -56,13 +54,12 @@ export default function LiveFeed() {
 									: "bg-slate-800/40 backdrop-blur-sm border-slate-700/50 hover:border-slate-600/50"
 							)}
 						>
-							{/* Glow effect for high value */}
+
 							{isHighValue && (
 								<div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent rounded-xl" />
 							)}
 
 							<div className="relative space-y-2">
-								{/* Top Row: Time + Block + Symbol */}
 								<div className="flex items-center justify-between">
 									<div className="flex items-center gap-3">
 										<span className="text-xs text-slate-500 font-mono">
@@ -77,7 +74,6 @@ export default function LiveFeed() {
 									</span>
 								</div>
 
-								{/* Direction Badge */}
 								<div className="flex justify-center">
 									<span className={clsx(
 										"text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
@@ -89,7 +85,6 @@ export default function LiveFeed() {
 									</span>
 								</div>
 
-								{/* Middle Row: Price Comparison */}
 								<div className="flex items-center justify-between bg-slate-900/50 rounded-lg p-2">
 									<div className="flex items-center gap-2">
 										{event.data?.direction === "DEX -> CEX" ? (
@@ -127,7 +122,6 @@ export default function LiveFeed() {
 										)}
 									</div>
 
-									{/* Spread Badge */}
 									<div className={clsx(
 										"px-2 py-1 rounded-lg text-xs font-mono font-bold",
 										(event.data?.spreadPct || 0) > 0
@@ -138,7 +132,6 @@ export default function LiveFeed() {
 									</div>
 								</div>
 
-								{/* Bottom Row: Profit Breakdown */}
 								<div className="grid grid-cols-3 gap-2 text-xs">
 									<div className="bg-slate-900/50 rounded-lg p-2">
 										<div className="text-slate-500 mb-0.5">Gross</div>

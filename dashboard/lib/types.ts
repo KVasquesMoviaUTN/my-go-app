@@ -9,6 +9,7 @@ export type ArbitrageEvent = {
     estimatedProfit: number;
     gasCost: number;
     symbol: string; // e.g., "ETH-USDC"
+    direction: string; // "CEX -> DEX" or "DEX -> CEX"
   }
 }
 

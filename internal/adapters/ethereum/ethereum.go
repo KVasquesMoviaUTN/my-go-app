@@ -95,14 +95,18 @@ func (a *Adapter) GetQuote(ctx context.Context, tokenIn, tokenOut string, amount
 	}
 
 
-	// outputs: amountOut, sqrtPriceX96After, initializedTicksCrossed, gasEstimate
+
+
 	unpacked, err := a.parsedABI.Unpack("quoteExactInputSingle", result)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unpack result: %w", err)
 	}
 
 
-	// Unpack returns []interface{}
+	if err != nil {
+		return nil, fmt.Errorf("failed to unpack result: %w", err)
+	}
+
 	if len(unpacked) < 4 {
 		return nil, fmt.Errorf("unexpected result length")
 	}

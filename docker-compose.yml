@@ -13,6 +13,7 @@ services:
       - TRADE_SIZES=1000000000000000000,10000000000000000000
     ports:
       - "9090:9090"
+      - "8080:8080"
 
   dashboard:
     build: ./dashboard
@@ -21,7 +22,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8080 # Assuming bot WS is exposed on 8080
+      - NEXT_PUBLIC_API_URL=ws://localhost:8080/ws
 
   prometheus:
     image: prom/prometheus:latest

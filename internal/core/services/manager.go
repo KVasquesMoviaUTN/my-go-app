@@ -135,7 +135,7 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 		gasPrice, err = m.dex.GetGasPrice(ctx)
 		if err != nil {
 			slog.Warn("failed to fetch gas price, using default", "err", err)
-			gasPrice = big.NewInt(30000000000) // 30 gwei default
+			gasPrice = big.NewInt(30000000000)
 		}
 		return nil
 	})
@@ -162,7 +162,7 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 	}
 
 	for i, size := range m.cfg.TradeSizes {
-		i, size := i, size // capture loop variables
+		i, size := i, size
 		g.Go(func() error {
 			sellQ, err := m.dex.GetQuote(ctx, m.cfg.TokenInAddr, m.cfg.TokenOutAddr, size, m.cfg.PoolFee)
 			if err != nil {

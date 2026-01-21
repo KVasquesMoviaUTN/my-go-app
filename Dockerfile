@@ -23,6 +23,8 @@ COPY --from=builder /app/bot .
 
 # Expose metrics port
 EXPOSE 9090
+# Expose WebSocket port
+EXPOSE 8080
 
 # Run
 CMD ["./bot"]
