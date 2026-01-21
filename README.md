@@ -42,6 +42,9 @@ The project follows **Hexagonal Architecture (Ports & Adapters)** to ensure sepa
     - **Net Profit Calculation**: `Net Profit = Gross Profit - (Gas Estimate * Gas Price)`.
     - **UI**: The dashboard displays a breakdown of Gross Profit, Gas Cost, and Net Profit.
 
+### 8. Trade-offs
+"Decidí usar el QuoterV2 de Uniswap para mayor precisión matemática en la estimación de swaps, sacrificando la latencia mínima que daría un cálculo local de ticks, priorizando la fiabilidad de la detección."
+
 ## 🚀 Setup & Usage
 
 ### Prerequisites
