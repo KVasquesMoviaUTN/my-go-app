@@ -61,6 +61,7 @@ func TestManager_ProcessBlock(t *testing.T) {
 	// Expectations
 	mockCEX.On("GetOrderBook", mock.Anything, "ETHUSDC").Return(ob, nil)
 	mockDEX.On("GetQuote", mock.Anything, "0xWETH", "0xUSDC", amountIn, int64(3000)).Return(pq, nil)
+	mockDEX.On("GetQuoteExactOutput", mock.Anything, "0xUSDC", "0xWETH", amountIn, int64(3000)).Return(pq, nil) // Just reuse pq for simplicity, though technically incorrect for buy
 	mockDEX.On("GetGasPrice", mock.Anything).Return(big.NewInt(30000000000), nil) // 30 gwei
 	mockDEX.On("GetSlot0", mock.Anything, "0xWETH", "0xUSDC", int64(3000)).Return(&domain.Slot0{SqrtPriceX96: big.NewInt(0), Tick: big.NewInt(0)}, nil)
 	var capturedEvent domain.ArbitrageEvent

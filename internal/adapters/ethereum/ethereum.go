@@ -21,7 +21,7 @@ import (
 const QuoterV2Address = "0x61fFE014bA17989E743c5F6cB21bF9697530B21e"
 
 
-const quoterABI = `[{"inputs":[{"components":[{"internalType":"address","name":"tokenIn","type":"address"},{"internalType":"address","name":"tokenOut","type":"address"},{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"uint24","name":"fee","type":"uint24"},{"internalType":"uint160","name":"sqrtPriceLimitX96","type":"uint160"}],"internalType":"struct IQuoterV2.QuoteExactInputSingleParams","name":"params","type":"tuple"}],"name":"quoteExactInputSingle","outputs":[{"internalType":"uint256","name":"amountOut","type":"uint256"},{"internalType":"uint160","name":"sqrtPriceX96After","type":"uint160"},{"internalType":"uint32","name":"initializedTicksCrossed","type":"uint32"},{"internalType":"uint256","name":"gasEstimate","type":"uint256"}],"stateMutability":"nonpayable","type":"function"}]`
+const quoterABI = `[{"inputs":[{"components":[{"internalType":"address","name":"tokenIn","type":"address"},{"internalType":"address","name":"tokenOut","type":"address"},{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"uint24","name":"fee","type":"uint24"},{"internalType":"uint160","name":"sqrtPriceLimitX96","type":"uint160"}],"internalType":"struct IQuoterV2.QuoteExactInputSingleParams","name":"params","type":"tuple"}],"name":"quoteExactInputSingle","outputs":[{"internalType":"uint256","name":"amountOut","type":"uint256"},{"internalType":"uint160","name":"sqrtPriceX96After","type":"uint160"},{"internalType":"uint32","name":"initializedTicksCrossed","type":"uint32"},{"internalType":"uint256","name":"gasEstimate","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"components":[{"internalType":"address","name":"tokenIn","type":"address"},{"internalType":"address","name":"tokenOut","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint24","name":"fee","type":"uint24"},{"internalType":"uint160","name":"sqrtPriceLimitX96","type":"uint160"}],"internalType":"struct IQuoterV2.QuoteExactOutputSingleParams","name":"params","type":"tuple"}],"name":"quoteExactOutputSingle","outputs":[{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"uint160","name":"sqrtPriceX96After","type":"uint160"},{"internalType":"uint32","name":"initializedTicksCrossed","type":"uint32"},{"internalType":"uint256","name":"gasEstimate","type":"uint256"}],"stateMutability":"nonpayable","type":"function"}]`
 
 type Adapter struct {
 	client    *ethclient.Client
@@ -120,6 +120,58 @@ func (a *Adapter) GetQuote(ctx context.Context, tokenIn, tokenOut string, amount
 		Price:     amountOutDec,
 		GasEstimate: gasEstimate,
 		Timestamp: time.Now(),
+	}, nil
+}
+
+func (a *Adapter) GetQuoteExactOutput(ctx context.Context, tokenIn, tokenOut string, amountOut *big.Int, fee int64) (*domain.PriceQuote, error) {
+	params := struct {
+		TokenIn           common.Address
+		TokenOut          common.Address
+		Amount            *big.Int
+		Fee               *big.Int
+		SqrtPriceLimitX96 *big.Int
+	}{
+		TokenIn:           common.HexToAddress(tokenIn),
+		TokenOut:          common.HexToAddress(tokenOut),
+		Amount:            amountOut,
+		Fee:               big.NewInt(fee),
+		SqrtPriceLimitX96: big.NewInt(0),
+	}
+
+	data, err := a.parsedABI.Pack("quoteExactOutputSingle", params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to pack data: %w", err)
+	}
+
+	toAddr := common.HexToAddress(QuoterV2Address)
+	msg := ethereum.CallMsg{
+		To:   &toAddr,
+		Data: data,
+	}
+
+	result, err := a.client.CallContract(ctx, msg, nil)
+	if err != nil {
+		return nil, fmt.Errorf("eth_call failed: %w", err)
+	}
+
+	unpacked, err := a.parsedABI.Unpack("quoteExactOutputSingle", result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unpack result: %w", err)
+	}
+
+	if len(unpacked) < 4 {
+		return nil, fmt.Errorf("unexpected result length")
+	}
+
+	amountIn := unpacked[0].(*big.Int)
+	gasEstimate := unpacked[3].(*big.Int)
+
+	amountInDec := decimal.NewFromBigInt(amountIn, 0)
+
+	return &domain.PriceQuote{
+		Price:       amountInDec,
+		GasEstimate: gasEstimate,
+		Timestamp:   time.Now(),
 	}, nil
 }
 

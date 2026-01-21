@@ -150,8 +150,9 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 	})
 
 	type quoteResult struct {
-		amt   *big.Int
-		quote *domain.PriceQuote
+		amt        *big.Int
+		sellQuote  *domain.PriceQuote // CEX Buy -> DEX Sell
+		buyQuote   *domain.PriceQuote // DEX Buy -> CEX Sell
 	}
 	quoteResults := make([]quoteResult, len(m.cfg.TradeSizes))
 
@@ -163,11 +164,21 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 	for i, size := range m.cfg.TradeSizes {
 		i, size := i, size // capture loop variables
 		g.Go(func() error {
-			quote, err := m.dex.GetQuote(ctx, m.cfg.TokenInAddr, m.cfg.TokenOutAddr, size, m.cfg.PoolFee)
+			// 1. CEX Buy -> DEX Sell (Sell ETH on DEX)
+			sellQ, err := m.dex.GetQuote(ctx, m.cfg.TokenInAddr, m.cfg.TokenOutAddr, size, m.cfg.PoolFee)
 			if err != nil {
-				return fmt.Errorf("dex quote failed for size %s: %w", size, err)
+				return fmt.Errorf("dex sell quote failed for size %s: %w", size, err)
 			}
-			quoteResults[i] = quoteResult{amt: size, quote: quote}
+			
+			// 2. DEX Buy -> CEX Sell (Buy ETH on DEX)
+			// We want to buy exactly 'size' ETH, so we use GetQuoteExactOutput
+			// TokenIn = USDC (TokenOutAddr), TokenOut = ETH (TokenInAddr)
+			buyQ, err := m.dex.GetQuoteExactOutput(ctx, m.cfg.TokenOutAddr, m.cfg.TokenInAddr, size, m.cfg.PoolFee)
+			if err != nil {
+				return fmt.Errorf("dex buy quote failed for size %s: %w", size, err)
+			}
+
+			quoteResults[i] = quoteResult{amt: size, sellQuote: sellQ, buyQuote: buyQ}
 			return nil
 		})
 	}
@@ -178,14 +189,16 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 	}
 
 	for _, res := range quoteResults {
-		if res.quote == nil {
-			continue
+		if res.sellQuote != nil {
+			m.checkCexBuyDexSell(ctx, blockNum, ob, res.amt, res.sellQuote, gasPrice)
 		}
-		m.checkArbitrageWithData(ctx, blockNum, ob, res.amt, res.quote, gasPrice)
+		if res.buyQuote != nil {
+			m.checkDexBuyCexSell(ctx, blockNum, ob, res.amt, res.buyQuote, gasPrice)
+		}
 	}
 }
 
-func (m *Manager) checkArbitrageWithData(ctx context.Context, blockNum *big.Int, ob *domain.OrderBook, amountIn *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) {
+func (m *Manager) checkCexBuyDexSell(ctx context.Context, blockNum *big.Int, ob *domain.OrderBook, amountIn *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) {
 	amtIn := decimal.NewFromBigInt(amountIn, -m.cfg.TokenInDec)
 	amtOut := pq.Price.Mul(decimal.NewFromFloat(1).Div(decimal.New(1, m.cfg.TokenOutDec)))
 	
@@ -246,6 +259,51 @@ func (m *Manager) checkArbitrageWithData(ctx context.Context, blockNum *big.Int,
 		observability.ArbitrageProfit.WithLabelValues("USDC").Add(p)
 		
 		m.printReport(amtIn, cexPrice, dexPrice, profit, "CEX -> DEX")
+	}
+}
+
+func (m *Manager) checkDexBuyCexSell(ctx context.Context, blockNum *big.Int, ob *domain.OrderBook, amountOut *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) {
+	// DEX Buy -> CEX Sell
+	// We buy 'amountOut' ETH on DEX using 'pq.Price' USDC
+	// We sell 'amountOut' ETH on CEX for USDC
+
+	ethAmount := decimal.NewFromBigInt(amountOut, -m.cfg.TokenInDec) // ETH amount
+	usdcIn := pq.Price.Mul(decimal.NewFromFloat(1).Div(decimal.New(1, m.cfg.TokenOutDec))) // USDC needed
+
+	dexPrice := usdcIn.Div(ethAmount) // Price per ETH on DEX
+
+	// Check CEX Bid (Sell ETH)
+	cexPrice, ok := ob.CalculateEffectivePrice("sell", ethAmount)
+	if !ok {
+		return
+	}
+
+	spread := cexPrice.Sub(dexPrice).Div(dexPrice).Mul(decimal.NewFromFloat(100))
+	
+	slog.Info("Market analysis complete (DEX->CEX)",
+		"block", blockNum,
+		"binance_price", cexPrice.StringFixed(2),
+		"uniswap_price", dexPrice.StringFixed(2),
+		"spread_pct", spread.StringFixed(2),
+		"status", "no_opportunity",
+		"size", ethAmount.StringFixed(2),
+	)
+	
+	cexFee := decimal.NewFromFloat(0.001)
+	cexRevenue := cexPrice.Mul(ethAmount).Mul(decimal.NewFromFloat(1).Sub(cexFee))
+	
+	gasUsed := decimal.NewFromBigInt(pq.GasEstimate, 0)
+	gasPriceEth := decimal.NewFromBigInt(gasPriceWei, -18)
+	gasCost := gasUsed.Mul(gasPriceEth).Mul(cexPrice) // Convert gas cost to USDC using CEX price
+
+	profit := cexRevenue.Sub(usdcIn).Sub(gasCost)
+
+	if profit.GreaterThan(m.cfg.MinProfit) {
+		observability.ArbitrageOpsFound.Inc()
+		p, _ := profit.Float64()
+		observability.ArbitrageProfit.WithLabelValues("USDC").Add(p)
+		
+		m.printReport(ethAmount, cexPrice, dexPrice, profit, "DEX -> CEX")
 	}
 }
 

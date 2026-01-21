@@ -34,6 +34,14 @@ func (m *MockPriceProvider) GetQuote(ctx context.Context, tokenIn, tokenOut stri
 	return args.Get(0).(*domain.PriceQuote), args.Error(1)
 }
 
+func (m *MockPriceProvider) GetQuoteExactOutput(ctx context.Context, tokenIn, tokenOut string, amountOut *big.Int, fee int64) (*domain.PriceQuote, error) {
+	args := m.Called(ctx, tokenIn, tokenOut, amountOut, fee)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.PriceQuote), args.Error(1)
+}
+
 func (m *MockPriceProvider) GetGasPrice(ctx context.Context) (*big.Int, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
