@@ -134,6 +134,24 @@ Access at `http://localhost:3000`.
 go test ./...
 ```
 
+## 🚀 Deployment
+
+### 1. Backend (Render.com)
+The bot needs to run 24/7, so we use Render (or Railway/DigitalOcean).
+
+1.  Fork this repo.
+2.  Create a new **Web Service** on Render.
+3.  Connect your GitHub repo.
+4.  Render will detect `render.yaml` automatically.
+5.  **Important**: Go to "Environment" and add your `ETH_NODE_WS` and `ETH_NODE_HTTP` keys.
+
+### 2. Frontend (Vercel)
+1.  Create a new Project on Vercel.
+2.  Import your GitHub repo.
+3.  Vercel will detect the `dashboard` folder thanks to `vercel.json`.
+4.  **Environment Variables**: Add `NEXT_PUBLIC_API_URL` and set it to your Render Backend URL (e.g., `wss://arbitrage-bot.onrender.com/ws`).
+
+
 ## 📂 Project Structure
 
 ```
