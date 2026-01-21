@@ -110,6 +110,7 @@ Access at `http://localhost:3000`.
 
 ## 📊 Class Diagram
 
+
 ```mermaid
 classDiagram
     class Manager {
