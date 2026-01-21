@@ -16,7 +16,10 @@ import (
 	"github.com/KVasquesMoviaUTN/my-go-app/internal/adapters/binance"
 	"github.com/KVasquesMoviaUTN/my-go-app/internal/adapters/blockchain"
 	"github.com/KVasquesMoviaUTN/my-go-app/internal/adapters/ethereum"
+	"github.com/KVasquesMoviaUTN/my-go-app/internal/adapters/kraken"
+	"github.com/KVasquesMoviaUTN/my-go-app/internal/adapters/okx"
 	"github.com/KVasquesMoviaUTN/my-go-app/internal/adapters/websocket"
+	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/ports"
 	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/services"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -43,13 +46,13 @@ func main() {
 	viper.SetDefault("ETH_NODE_WS", "wss://mainnet.infura.io/ws/v3/YOUR_KEY")
 	viper.SetDefault("ETH_NODE_HTTP", "https://mainnet.infura.io/v3/YOUR_KEY")
 	viper.SetDefault("SYMBOL", "ETHUSDC")
-	viper.SetDefault("TOKEN_IN", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2") // WETH
-	viper.SetDefault("TOKEN_OUT", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48") // USDC
+	viper.SetDefault("TOKEN_IN", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+	viper.SetDefault("TOKEN_OUT", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
 	viper.SetDefault("TOKEN_IN_DEC", 18)
 	viper.SetDefault("TOKEN_OUT_DEC", 6)
-	viper.SetDefault("POOL_FEE", 3000) // 0.3%
-	viper.SetDefault("TRADE_SIZES", "1000000000000000000,10000000000000000000") // 1 ETH, 10 ETH
-	viper.SetDefault("MIN_PROFIT", "10.0") // 10 USDC
+	viper.SetDefault("POOL_FEE", 3000)
+	viper.SetDefault("TRADE_SIZES", "1000000000000000000,10000000000000000000")
+	viper.SetDefault("MIN_PROFIT", "10.0")
 	viper.SetDefault("MAX_WORKERS", 5)
 	viper.SetDefault("METRICS_PORT", "8085")
 	viper.SetDefault("CEX_PROVIDER", "binance")
@@ -81,61 +84,74 @@ func main() {
 	minProfitStr := viper.GetString("MIN_PROFIT")
 	minProfit, err := decimal.NewFromString(minProfitStr)
 	if err != nil {
-		log.Fatalf("Invalid MIN_PROFIT: %s", minProfitStr)
+		log.Fatalf("Invalid MIN_PROFIT: %v", err)
 	}
 	cfg.MinProfit = minProfit
 
-	binanceURL := viper.GetString("BINANCE_API_URL")
-	slog.Info("Initializing Binance Adapter", "url", binanceURL)
-	cexAdapter := binance.NewAdapter(binanceURL)
+	cexProvider := viper.GetString("CEX_PROVIDER")
+	cex := createCEXAdapter(cexProvider)
+	slog.Info("Using CEX provider", "provider", cexProvider)
 
-	dexAdapter, err := ethereum.NewAdapter(viper.GetString("ETH_NODE_HTTP"))
+	ethNodeHTTP := viper.GetString("ETH_NODE_HTTP")
+	dex, err := ethereum.NewAdapter(ethNodeHTTP)
 	if err != nil {
-		log.Fatalf("Failed to create Ethereum adapter: %v", err)
+		log.Fatalf("Failed to create DEX adapter: %v", err)
 	}
 
-	listener := blockchain.NewListener(viper.GetString("ETH_NODE_WS"))
+	ethNodeWS := viper.GetString("ETH_NODE_WS")
+	listener := blockchain.NewListener(ethNodeWS)
 
-	wsServer := websocket.NewServer()
-	wsServer.Start(":8080")
+	notifier := websocket.NewServer()
+	go func() {
+		notifier.Start(":8080")
+	}()
 
-	manager := services.NewManager(cfg, cexAdapter, dexAdapter, listener, wsServer)
+	manager := services.NewManager(cfg, cex, dex, listener, notifier)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
 		<-sigChan
-		log.Println("Shutting down...")
+		slog.Info("Shutdown signal received")
 		cancel()
 	}()
 
+	slog.Info("Starting arbitrage bot")
 	if err := manager.Start(ctx); err != nil {
-		log.Printf("Manager finished with error: %v", err)
-	} else {
-		log.Println("Manager finished successfully")
+		slog.Error("Manager failed", "error", err)
 	}
 }
 
-func parseTradeSizes(input string) ([]*big.Int, error) {
-	var sizes []*big.Int
-	parts := strings.Split(input, ",")
-	
+func createCEXAdapter(provider string) ports.ExchangeAdapter {
+	switch strings.ToLower(provider) {
+	case "kraken":
+		return kraken.NewAdapter()
+	case "okx":
+		return okx.NewAdapter()
+	case "binance":
+		fallthrough
+	default:
+		return binance.NewAdapter(viper.GetString("BINANCE_API_URL"))
+	}
+}
+
+func parseTradeSizes(s string) ([]*big.Int, error) {
+	parts := strings.Split(s, ",")
+	sizes := make([]*big.Int, 0, len(parts))
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
 		if p == "" {
 			continue
 		}
-		
-		val, ok := new(big.Int).SetString(p, 10)
+		size, ok := new(big.Int).SetString(p, 10)
 		if !ok {
-			return sizes, fmt.Errorf("invalid trade size value: %s", p)
+			return sizes, fmt.Errorf("invalid trade size: %s", p)
 		}
-		sizes = append(sizes, val)
+		sizes = append(sizes, size)
 	}
-	
 	return sizes, nil
 }

@@ -158,8 +158,18 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 	// Pre-flight Check: Calculate Spot Price from Slot0
 	// If Spot Price spread is very negative (e.g. < -1%), skip expensive quotes.
 	// This is a heuristic optimization.
-	skipQuotes := false
 	if slot0 != nil && ob != nil && len(ob.Asks) > 0 {
+		slog.Info("Pre-flight check available", "slot0_tick", slot0.Tick)
+	}
+
+	for i, size := range m.cfg.TradeSizes {
+		i, size := i, size // capture loop variables
+		g.Go(func() error {
+			quote, err := m.dex.GetQuote(ctx, m.cfg.TokenInAddr, m.cfg.TokenOutAddr, size, m.cfg.PoolFee)
+			if err != nil {
+				return fmt.Errorf("dex quote failed for size %s: %w", size, err)
+			}
+			quoteResults[i] = quoteResult{amt: size, quote: quote}
 			return nil
 		})
 	}

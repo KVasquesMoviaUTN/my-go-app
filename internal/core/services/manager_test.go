@@ -63,7 +63,14 @@ func TestManager_ProcessBlock(t *testing.T) {
 	mockDEX.On("GetQuote", mock.Anything, "0xWETH", "0xUSDC", amountIn, int64(3000)).Return(pq, nil)
 	mockDEX.On("GetGasPrice", mock.Anything).Return(big.NewInt(30000000000), nil) // 30 gwei
 	mockDEX.On("GetSlot0", mock.Anything, "0xWETH", "0xUSDC", int64(3000)).Return(&domain.Slot0{SqrtPriceX96: big.NewInt(0), Tick: big.NewInt(0)}, nil)
-	mockNotifier.On("Broadcast", mock.Anything).Return()
+	var capturedEvent domain.ArbitrageEvent
+	mockNotifier.On("Broadcast", mock.MatchedBy(func(e domain.ArbitrageEvent) bool {
+		if e.Type == "OPPORTUNITY" {
+			capturedEvent = e
+			return true
+		}
+		return true // Accept other events (HEARTBEAT) but don't capture them as the one we want to verify
+	})).Return()
 
 	// We can't easily test the private processBlock method directly unless we export it or trigger it via Start.
 	// However, for unit testing logic, it's better to test the logic method if possible.
@@ -96,4 +103,28 @@ func TestManager_ProcessBlock(t *testing.T) {
 	mockCEX.AssertExpectations(t)
 	mockDEX.AssertExpectations(t)
 	mockNotifier.AssertExpectations(t)
+
+	if capturedEvent.Type != "OPPORTUNITY" {
+		t.Errorf("Expected OPPORTUNITY event, got %s", capturedEvent.Type)
+	}
+	
+	if capturedEvent.Data == nil {
+		t.Fatal("Event data is nil")
+	}
+
+	// Expected Profit Calculation:
+	// AmtIn: 1 ETH
+	// CEX Price: 2000
+	// DEX Price: 2050
+	// Gross Revenue: 2050 - 2000 = 50 USDC
+	// CEX Fee: 0.1% of 2000 = 2 USDC
+	// Gas: 100,000 * 30 Gwei = 0.003 ETH
+	// Gas Cost in USDC: 0.003 * 2000 = 6 USDC
+	// Net Profit: 50 - 2 - 6 = 42 USDC
+	
+	expectedProfit := 42.0
+	// Allow small floating point error
+	if diff := capturedEvent.Data.EstimatedProfit - expectedProfit; diff > 0.01 || diff < -0.01 {
+		t.Errorf("Expected profit ~%f, got %f", expectedProfit, capturedEvent.Data.EstimatedProfit)
+	}
 }

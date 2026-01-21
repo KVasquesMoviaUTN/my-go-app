@@ -101,7 +101,7 @@ func (a *Adapter) GetOrderBook(ctx context.Context, symbol string) (*domain.Orde
 		}
 		orderBook.Asks = append(orderBook.Asks, domain.PriceLevel{
 			Price:    price,
-			Quantity: quantity,
+			Amount: quantity,
 		})
 	}
 
@@ -119,7 +119,7 @@ func (a *Adapter) GetOrderBook(ctx context.Context, symbol string) (*domain.Orde
 		}
 		orderBook.Bids = append(orderBook.Bids, domain.PriceLevel{
 			Price:    price,
-			Quantity: quantity,
+			Amount: quantity,
 		})
 	}
 

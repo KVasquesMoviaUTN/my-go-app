@@ -63,6 +63,11 @@ func (m *MockBlockchainListener) SubscribeNewHeads(ctx context.Context) (<-chan 
 		ch2 = args.Get(1).(<-chan error)
 	}
 
+	var ch1 <-chan *domain.Block
+	if args.Get(0) != nil {
+		ch1 = args.Get(0).(<-chan *domain.Block)
+	}
+
 	return ch1, ch2, args.Error(2)
 }
 
