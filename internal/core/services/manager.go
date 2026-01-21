@@ -28,7 +28,7 @@ type Config struct {
 	CacheDuration time.Duration
 }
 
-// Manager orchestrates the arbitrage bot.
+
 type Manager struct {
 	cfg        Config
 	cex        ports.ExchangeAdapter

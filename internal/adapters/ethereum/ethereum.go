@@ -47,7 +47,7 @@ func NewAdapter(clientURL string) (ports.PriceProvider, error) {
 	}, nil
 }
 
-// QuoteExactInputSingleParams struct matching the ABI tuple
+
 type QuoteExactInputSingleParams struct {
 	TokenIn           common.Address
 	TokenOut          common.Address
@@ -57,7 +57,7 @@ type QuoteExactInputSingleParams struct {
 }
 
 func (a *Adapter) GetQuote(ctx context.Context, tokenIn, tokenOut string, amountIn *big.Int, fee int64) (*domain.PriceQuote, error) {
-	// Prepare the input struct
+
 	params := struct {
 		TokenIn           common.Address
 		TokenOut          common.Address
@@ -72,33 +72,33 @@ func (a *Adapter) GetQuote(ctx context.Context, tokenIn, tokenOut string, amount
 		SqrtPriceLimitX96: big.NewInt(0),
 	}
 
-	// Pack the input arguments
+
 	data, err := a.parsedABI.Pack("quoteExactInputSingle", params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack data: %w", err)
 	}
 
-	// Create the call message
+
 	toAddr := common.HexToAddress(QuoterV2Address)
 	msg := ethereum.CallMsg{
 		To:   &toAddr,
 		Data: data,
 	}
 
-	// Execute the call (eth_call)
+
 	result, err := a.client.CallContract(ctx, msg, nil)
 	if err != nil {
 		return nil, fmt.Errorf("eth_call failed: %w", err)
 	}
 
-	// Unpack the output
+
 	// outputs: amountOut, sqrtPriceX96After, initializedTicksCrossed, gasEstimate
 	unpacked, err := a.parsedABI.Unpack("quoteExactInputSingle", result)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unpack result: %w", err)
 	}
 
-	// Extract values
+
 	// Unpack returns []interface{}
 	if len(unpacked) < 4 {
 		return nil, fmt.Errorf("unexpected result length")

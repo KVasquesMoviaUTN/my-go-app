@@ -5,6 +5,8 @@
 *.dll
 *.so
 *.dylib
+bin/
+debug
 
 # Test Binaries
 *.test
@@ -33,6 +35,10 @@ Thumbs.db
 *.swo
 *~
 *.iml
+
+# Security
+*.key
+*.pem
 
 # Go
 vendor/
