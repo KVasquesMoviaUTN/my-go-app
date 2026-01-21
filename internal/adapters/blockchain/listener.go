@@ -58,14 +58,12 @@ func (l *Listener) SubscribeNewHeads(ctx context.Context) (<-chan *domain.Block,
 					continue
 				}
 
-				// Backfill missing blocks
 				if l.lastBlock != nil {
 					head, err := client.HeaderByNumber(ctx, nil)
 					if err == nil && head.Number.Cmp(l.lastBlock) > 0 {
 						start := new(big.Int).Add(l.lastBlock, big.NewInt(1))
 						end := head.Number
 						
-						// Limit backfill to 50 blocks
 						if new(big.Int).Sub(end, start).Cmp(big.NewInt(50)) > 0 {
 							start = new(big.Int).Sub(end, big.NewInt(50))
 						}

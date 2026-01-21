@@ -151,8 +151,8 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 
 	type quoteResult struct {
 		amt        *big.Int
-		sellQuote  *domain.PriceQuote // CEX Buy -> DEX Sell
-		buyQuote   *domain.PriceQuote // DEX Buy -> CEX Sell
+		sellQuote  *domain.PriceQuote
+		buyQuote   *domain.PriceQuote
 	}
 	quoteResults := make([]quoteResult, len(m.cfg.TradeSizes))
 
@@ -164,15 +164,11 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 	for i, size := range m.cfg.TradeSizes {
 		i, size := i, size // capture loop variables
 		g.Go(func() error {
-			// 1. CEX Buy -> DEX Sell (Sell ETH on DEX)
 			sellQ, err := m.dex.GetQuote(ctx, m.cfg.TokenInAddr, m.cfg.TokenOutAddr, size, m.cfg.PoolFee)
 			if err != nil {
 				return fmt.Errorf("dex sell quote failed for size %s: %w", size, err)
 			}
 			
-			// 2. DEX Buy -> CEX Sell (Buy ETH on DEX)
-			// We want to buy exactly 'size' ETH, so we use GetQuoteExactOutput
-			// TokenIn = USDC (TokenOutAddr), TokenOut = ETH (TokenInAddr)
 			buyQ, err := m.dex.GetQuoteExactOutput(ctx, m.cfg.TokenOutAddr, m.cfg.TokenInAddr, size, m.cfg.PoolFee)
 			if err != nil {
 				return fmt.Errorf("dex buy quote failed for size %s: %w", size, err)
@@ -250,6 +246,7 @@ func (m *Manager) checkCexBuyDexSell(ctx context.Context, blockNum *big.Int, ob 
 			EstimatedProfit: profitFloat,
 			GasCost:         gasCostFloat,
 			Symbol:          m.cfg.Symbol,
+			Direction:       "CEX -> DEX",
 		},
 	})
 	
@@ -263,16 +260,11 @@ func (m *Manager) checkCexBuyDexSell(ctx context.Context, blockNum *big.Int, ob 
 }
 
 func (m *Manager) checkDexBuyCexSell(ctx context.Context, blockNum *big.Int, ob *domain.OrderBook, amountOut *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) {
-	// DEX Buy -> CEX Sell
-	// We buy 'amountOut' ETH on DEX using 'pq.Price' USDC
-	// We sell 'amountOut' ETH on CEX for USDC
+	ethAmount := decimal.NewFromBigInt(amountOut, -m.cfg.TokenInDec)
+	usdcIn := pq.Price.Mul(decimal.NewFromFloat(1).Div(decimal.New(1, m.cfg.TokenOutDec)))
 
-	ethAmount := decimal.NewFromBigInt(amountOut, -m.cfg.TokenInDec) // ETH amount
-	usdcIn := pq.Price.Mul(decimal.NewFromFloat(1).Div(decimal.New(1, m.cfg.TokenOutDec))) // USDC needed
+	dexPrice := usdcIn.Div(ethAmount)
 
-	dexPrice := usdcIn.Div(ethAmount) // Price per ETH on DEX
-
-	// Check CEX Bid (Sell ETH)
 	cexPrice, ok := ob.CalculateEffectivePrice("sell", ethAmount)
 	if !ok {
 		return
@@ -294,7 +286,7 @@ func (m *Manager) checkDexBuyCexSell(ctx context.Context, blockNum *big.Int, ob 
 	
 	gasUsed := decimal.NewFromBigInt(pq.GasEstimate, 0)
 	gasPriceEth := decimal.NewFromBigInt(gasPriceWei, -18)
-	gasCost := gasUsed.Mul(gasPriceEth).Mul(cexPrice) // Convert gas cost to USDC using CEX price
+	gasCost := gasUsed.Mul(gasPriceEth).Mul(cexPrice)
 
 	profit := cexRevenue.Sub(usdcIn).Sub(gasCost)
 

@@ -84,6 +84,7 @@ type TradeData struct {
 	EstimatedProfit float64 `json:"estimatedProfit"`
 	GasCost         float64 `json:"gasCost"`
 	Symbol          string  `json:"symbol"`
+	Direction       string  `json:"direction"`
 }
 
 type ArbitrageEvent struct {

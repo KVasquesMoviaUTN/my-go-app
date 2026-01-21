@@ -113,6 +113,10 @@ func TestManager_ProcessBlock(t *testing.T) {
 		t.Fatal("Event data is nil")
 	}
 
+	if capturedEvent.Data.Direction != "CEX -> DEX" {
+		t.Errorf("Expected direction CEX -> DEX, got %s", capturedEvent.Data.Direction)
+	}
+
 	// Expected Profit Calculation:
 	// AmtIn: 1 ETH
 	// CEX Price: 2000

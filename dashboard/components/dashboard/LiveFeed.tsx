@@ -77,22 +77,54 @@ export default function LiveFeed() {
 									</span>
 								</div>
 
+								{/* Direction Badge */}
+								<div className="flex justify-center">
+									<span className={clsx(
+										"text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
+										event.data?.direction === "DEX -> CEX"
+											? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+											: "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+									)}>
+										{event.data?.direction || "CEX -> DEX"}
+									</span>
+								</div>
+
 								{/* Middle Row: Price Comparison */}
 								<div className="flex items-center justify-between bg-slate-900/50 rounded-lg p-2">
 									<div className="flex items-center gap-2">
-										<div className="text-center">
-											<div className="text-xs text-slate-500 mb-0.5">CEX</div>
-											<div className="text-sm font-mono font-semibold text-slate-300">
-												${event.data?.cexPrice.toFixed(2)}
-											</div>
-										</div>
-										<ArrowRight size={14} className="text-slate-600 mx-1" />
-										<div className="text-center">
-											<div className="text-xs text-slate-500 mb-0.5">DEX</div>
-											<div className="text-sm font-mono font-semibold text-slate-300">
-												${event.data?.dexPrice.toFixed(2)}
-											</div>
-										</div>
+										{event.data?.direction === "DEX -> CEX" ? (
+											<>
+												<div className="text-center">
+													<div className="text-xs text-slate-500 mb-0.5">DEX (Buy)</div>
+													<div className="text-sm font-mono font-semibold text-slate-300">
+														${event.data?.dexPrice.toFixed(2)}
+													</div>
+												</div>
+												<ArrowRight size={14} className="text-slate-600 mx-1" />
+												<div className="text-center">
+													<div className="text-xs text-slate-500 mb-0.5">CEX (Sell)</div>
+													<div className="text-sm font-mono font-semibold text-slate-300">
+														${event.data?.cexPrice.toFixed(2)}
+													</div>
+												</div>
+											</>
+										) : (
+											<>
+												<div className="text-center">
+													<div className="text-xs text-slate-500 mb-0.5">CEX (Buy)</div>
+													<div className="text-sm font-mono font-semibold text-slate-300">
+														${event.data?.cexPrice.toFixed(2)}
+													</div>
+												</div>
+												<ArrowRight size={14} className="text-slate-600 mx-1" />
+												<div className="text-center">
+													<div className="text-xs text-slate-500 mb-0.5">DEX (Sell)</div>
+													<div className="text-sm font-mono font-semibold text-slate-300">
+														${event.data?.dexPrice.toFixed(2)}
+													</div>
+												</div>
+											</>
+										)}
 									</div>
 
 									{/* Spread Badge */}
