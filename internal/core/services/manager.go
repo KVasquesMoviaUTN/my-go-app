@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/domain"
-	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/ports"
-	"github.com/KVasquesMoviaUTN/my-go-app/internal/observability"
+	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/ports"
+	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/observability"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
 )

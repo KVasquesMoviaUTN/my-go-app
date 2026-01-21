@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
 	"github.com/gorilla/websocket"
 )
 

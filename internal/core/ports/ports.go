@@ -4,7 +4,7 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
 )
 
 // ExchangeAdapter defines the interface for interacting with a CEX.

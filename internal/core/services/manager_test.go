@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/domain"
-	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/ports/mocks"
-	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/services"
+	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/ports/mocks"
+	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/services"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
 )

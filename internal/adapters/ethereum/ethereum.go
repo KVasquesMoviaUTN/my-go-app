@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/domain"
-	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/ports"
+	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/ports"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"

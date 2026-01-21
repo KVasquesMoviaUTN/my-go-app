@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )

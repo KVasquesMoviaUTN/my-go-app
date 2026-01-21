@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/KVasquesMoviaUTN/my-go-app/internal/core/domain"
+	"github.com/KVasquesMoviaUTN/arbitrage-bot-go/internal/core/domain"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )

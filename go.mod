@@ -1,4 +1,4 @@
-module github.com/KVasquesMoviaUTN/my-go-app
+module github.com/KVasquesMoviaUTN/arbitrage-bot-go
 
 go 1.24.0
 
@@ -6,6 +6,7 @@ toolchain go1.24.12
 
 require (
 	github.com/ethereum/go-ethereum v1.16.8
+	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/shopspring/decimal v1.4.0
@@ -33,7 +34,6 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
