@@ -68,8 +68,8 @@ func (l *Listener) SubscribeNewHeads(ctx context.Context) (<-chan *domain.Block,
 						}
 
 						for i := new(big.Int).Set(start); i.Cmp(end) <= 0; i.Add(i, big.NewInt(1)) {
-							if err := l.limiter.Wait(ctx); err != nil {
-								l.logError(errChan, fmt.Errorf("rate limiter wait failed: %w", err))
+							if limitErr := l.limiter.Wait(ctx); limitErr != nil {
+								l.logError(errChan, fmt.Errorf("rate limiter wait failed: %w", limitErr))
 								break
 							}
 							block, err := client.BlockByNumber(ctx, i)

@@ -14,8 +14,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-
-
 type Adapter struct {
 	client  *http.Client
 	cb      *gobreaker.CircuitBreaker
