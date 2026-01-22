@@ -29,7 +29,9 @@ func TestServer_Broadcast(t *testing.T) {
 	// Connect a client
 	ws, _, err := websocket.DefaultDialer.Dial(u, nil)
 	assert.NoError(t, err)
-	defer ws.Close()
+	defer func() {
+		_ = ws.Close()
+	}()
 
 	// Wait for connection registration
 	time.Sleep(50 * time.Millisecond)

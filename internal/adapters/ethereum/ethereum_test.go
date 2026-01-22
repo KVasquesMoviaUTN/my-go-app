@@ -46,7 +46,7 @@ func TestGetQuote(t *testing.T) {
 
 		response := fmt.Sprintf(`{"jsonrpc":"2.0","id":1,"result":"%s"}`, hexResult)
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, response)
+		_, _ = fmt.Fprintln(w, response)
 	}))
 	defer ts.Close()
 
@@ -78,7 +78,7 @@ func TestGetGasPrice(t *testing.T) {
 		// 30 Gwei = 30000000000 Wei
 		response := `{"jsonrpc":"2.0","id":1,"result":"0x6fc23ac00"}`
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, response)
+		_, _ = fmt.Fprintln(w, response)
 	}))
 	defer ts.Close()
 
@@ -96,7 +96,7 @@ func TestGetGasPrice_Caching(t *testing.T) {
 		reqCount++
 		response := `{"jsonrpc":"2.0","id":1,"result":"0x6fc23ac00"}`
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, response)
+		_, _ = fmt.Fprintln(w, response)
 	}))
 	defer ts.Close()
 

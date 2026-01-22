@@ -64,7 +64,9 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 		slog.Error("WS upgrade failed", "error", err)
 		return
 	}
-	defer ws.Close()
+	defer func() {
+		_ = ws.Close()
+	}()
 
 	s.mu.Lock()
 	s.clients[ws] = true
@@ -92,7 +94,7 @@ func (s *Server) handleMessages() {
 			err := client.WriteJSON(msg)
 			if err != nil {
 				slog.Error("WS write failed", "error", err)
-				client.Close()
+				_ = client.Close()
 
 			}
 		}

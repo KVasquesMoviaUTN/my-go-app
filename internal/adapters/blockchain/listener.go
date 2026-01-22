@@ -55,7 +55,6 @@ func (l *Listener) SubscribeNewHeads(ctx context.Context) (<-chan *domain.Block,
 						backoff = maxBackoff
 					}
 					continue
-					continue
 				}
 
 				if l.lastBlock != nil {

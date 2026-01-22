@@ -33,7 +33,7 @@ func TestGetOrderBook(t *testing.T) {
 			]
 		}`
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, response)
+		_, _ = fmt.Fprintln(w, response)
 	}))
 	defer ts.Close()
 
