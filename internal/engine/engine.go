@@ -71,7 +71,11 @@ func (e *Engine) Run(ctx context.Context) error {
 
 
 	go func() {
-		e.notifier.Start(":8080")
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
+		e.notifier.Start(":" + port)
 	}()
 
 
