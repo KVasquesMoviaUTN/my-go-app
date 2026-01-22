@@ -76,6 +76,7 @@ func (a *Adapter) GetOrderBook(ctx context.Context, symbol string) (*domain.Orde
 		if err := json.NewDecoder(resp.Body).Decode(&depth); err != nil {
 			return nil, fmt.Errorf("failed to decode response: %w", err)
 		}
+		fmt.Printf("DEBUG: Binance LastUpdateID: %d\n", depth.LastUpdateID)
 		return depth, nil
 	})
 

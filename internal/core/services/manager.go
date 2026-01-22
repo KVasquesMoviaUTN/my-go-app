@@ -184,17 +184,38 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 		slog.Info("Pre-flight check available", "slot0_tick", slot0.Tick)
 	}
 
+	var bestTrade *domain.TradeData
+
 	for _, res := range quoteResults {
 		if res.sellQuote != nil {
-			m.checkCexBuyDexSell(blockNum, ob, res.amt, res.sellQuote, gasPrice)
+			trade := m.checkCexBuyDexSell(blockNum, ob, res.amt, res.sellQuote, gasPrice)
+			if trade != nil {
+				if bestTrade == nil || trade.EstimatedProfit > bestTrade.EstimatedProfit {
+					bestTrade = trade
+				}
+			}
 		}
 		if res.buyQuote != nil {
-			m.checkDexBuyCexSell(blockNum, ob, res.amt, res.buyQuote, gasPrice)
+			trade := m.checkDexBuyCexSell(blockNum, ob, res.amt, res.buyQuote, gasPrice)
+			if trade != nil {
+				if bestTrade == nil || trade.EstimatedProfit > bestTrade.EstimatedProfit {
+					bestTrade = trade
+				}
+			}
 		}
+	}
+
+	if bestTrade != nil {
+		m.notifier.Broadcast(domain.ArbitrageEvent{
+			Type:        "OPPORTUNITY",
+			BlockNumber: blockNum.Uint64(),
+			Timestamp:   time.Now(),
+			Data:        bestTrade,
+		})
 	}
 }
 
-func (m *Manager) checkCexBuyDexSell(blockNum *big.Int, ob *domain.OrderBook, amountIn *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) {
+func (m *Manager) checkCexBuyDexSell(blockNum *big.Int, ob *domain.OrderBook, amountIn *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) *domain.TradeData {
 	amtIn := decimal.NewFromBigInt(amountIn, -m.cfg.TokenInDec)
 	amtOut := pq.Price.Mul(decimal.NewFromFloat(1).Div(decimal.New(1, m.cfg.TokenOutDec)))
 
@@ -203,7 +224,7 @@ func (m *Manager) checkCexBuyDexSell(blockNum *big.Int, ob *domain.OrderBook, am
 	cexPrice, ok := ob.CalculateEffectivePrice("buy", amtIn)
 	if !ok {
 		slog.Info(fmt.Sprintf("[DEBUG] Block %s: Size %s | CEX Price Unavailable", blockNum, amtIn))
-		return
+		return nil
 	}
 
 	spread := dexPrice.Sub(cexPrice).Div(cexPrice).Mul(decimal.NewFromFloat(100))
@@ -213,7 +234,6 @@ func (m *Manager) checkCexBuyDexSell(blockNum *big.Int, ob *domain.OrderBook, am
 		"uniswap_price", dexPrice.StringFixed(2),
 		"spread_pct", spread.StringFixed(2),
 		"status", "no_opportunity",
-		"size", amtIn.StringFixed(2),
 		"size", amtIn.StringFixed(2),
 	)
 
@@ -234,20 +254,15 @@ func (m *Manager) checkCexBuyDexSell(blockNum *big.Int, ob *domain.OrderBook, am
 	profitFloat, _ := profit.Float64()
 	gasCostFloat, _ := gasCost.Float64()
 
-	m.notifier.Broadcast(domain.ArbitrageEvent{
-		Type:        "OPPORTUNITY",
-		BlockNumber: blockNum.Uint64(),
-		Timestamp:   time.Now(),
-		Data: &domain.TradeData{
-			CexPrice:        cexPriceFloat,
-			DexPrice:        dexPriceFloat,
-			SpreadPct:       spreadFloat,
-			EstimatedProfit: profitFloat,
-			GasCost:         gasCostFloat,
-			Symbol:          m.cfg.Symbol,
-			Direction:       "CEX -> DEX",
-		},
-	})
+	tradeData := &domain.TradeData{
+		CexPrice:        cexPriceFloat,
+		DexPrice:        dexPriceFloat,
+		SpreadPct:       spreadFloat,
+		EstimatedProfit: profitFloat,
+		GasCost:         gasCostFloat,
+		Symbol:          m.cfg.Symbol,
+		Direction:       "CEX -> DEX",
+	}
 
 	if profit.GreaterThan(m.cfg.MinProfit) {
 		observability.ArbitrageOpsFound.Inc()
@@ -256,9 +271,11 @@ func (m *Manager) checkCexBuyDexSell(blockNum *big.Int, ob *domain.OrderBook, am
 
 		m.printReport(amtIn, cexPrice, dexPrice, profit, "CEX -> DEX")
 	}
+
+	return tradeData
 }
 
-func (m *Manager) checkDexBuyCexSell(blockNum *big.Int, ob *domain.OrderBook, amountOut *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) {
+func (m *Manager) checkDexBuyCexSell(blockNum *big.Int, ob *domain.OrderBook, amountOut *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) *domain.TradeData {
 	ethAmount := decimal.NewFromBigInt(amountOut, -m.cfg.TokenInDec)
 	usdcIn := pq.Price.Mul(decimal.NewFromFloat(1).Div(decimal.New(1, m.cfg.TokenOutDec)))
 
@@ -266,7 +283,7 @@ func (m *Manager) checkDexBuyCexSell(blockNum *big.Int, ob *domain.OrderBook, am
 
 	cexPrice, ok := ob.CalculateEffectivePrice("sell", ethAmount)
 	if !ok {
-		return
+		return nil
 	}
 
 	spread := cexPrice.Sub(dexPrice).Div(dexPrice).Mul(decimal.NewFromFloat(100))
@@ -289,6 +306,22 @@ func (m *Manager) checkDexBuyCexSell(blockNum *big.Int, ob *domain.OrderBook, am
 
 	profit := cexRevenue.Sub(usdcIn).Sub(gasCost)
 
+	cexPriceFloat, _ := cexPrice.Float64()
+	dexPriceFloat, _ := dexPrice.Float64()
+	spreadFloat, _ := spread.Float64()
+	profitFloat, _ := profit.Float64()
+	gasCostFloat, _ := gasCost.Float64()
+
+	tradeData := &domain.TradeData{
+		CexPrice:        cexPriceFloat,
+		DexPrice:        dexPriceFloat,
+		SpreadPct:       spreadFloat,
+		EstimatedProfit: profitFloat,
+		GasCost:         gasCostFloat,
+		Symbol:          m.cfg.Symbol,
+		Direction:       "DEX -> CEX",
+	}
+
 	if profit.GreaterThan(m.cfg.MinProfit) {
 		observability.ArbitrageOpsFound.Inc()
 		p, _ := profit.Float64()
@@ -296,6 +329,8 @@ func (m *Manager) checkDexBuyCexSell(blockNum *big.Int, ob *domain.OrderBook, am
 
 		m.printReport(ethAmount, cexPrice, dexPrice, profit, "DEX -> CEX")
 	}
+
+	return tradeData
 }
 
 func (m *Manager) printReport(amount, cexPrice, dexPrice, profit decimal.Decimal, direction string) {
