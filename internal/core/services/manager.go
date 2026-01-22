@@ -87,7 +87,7 @@ func (m *Manager) Start(ctx context.Context) error {
 
 func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 
-	if time.Since(block.Timestamp) > 20*time.Second {
+	if time.Since(block.Timestamp) > 60*time.Second {
 		slog.Warn("Circuit Breaker: Skipping stale block", "block", block.Number, "age", time.Since(block.Timestamp))
 		return
 	}
