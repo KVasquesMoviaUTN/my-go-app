@@ -55,7 +55,7 @@ func TestEndToEndArbitrageFlow(t *testing.T) {
 					{"2001.00", "10.0"},
 				},
 			}
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
@@ -96,7 +96,7 @@ func TestEndToEndArbitrageFlow(t *testing.T) {
 			"id":      req.ID,
 			"result":  result,
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer ethServer.Close()
 
