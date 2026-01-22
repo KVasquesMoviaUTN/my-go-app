@@ -14,7 +14,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
-const baseURL = "https://api.binance.com/api/v3"
+
 
 type Adapter struct {
 	client  *http.Client

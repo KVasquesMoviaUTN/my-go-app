@@ -184,15 +184,15 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 
 	for _, res := range quoteResults {
 		if res.sellQuote != nil {
-			m.checkCexBuyDexSell(ctx, blockNum, ob, res.amt, res.sellQuote, gasPrice)
+			m.checkCexBuyDexSell(blockNum, ob, res.amt, res.sellQuote, gasPrice)
 		}
 		if res.buyQuote != nil {
-			m.checkDexBuyCexSell(ctx, blockNum, ob, res.amt, res.buyQuote, gasPrice)
+			m.checkDexBuyCexSell(blockNum, ob, res.amt, res.buyQuote, gasPrice)
 		}
 	}
 }
 
-func (m *Manager) checkCexBuyDexSell(ctx context.Context, blockNum *big.Int, ob *domain.OrderBook, amountIn *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) {
+func (m *Manager) checkCexBuyDexSell(blockNum *big.Int, ob *domain.OrderBook, amountIn *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) {
 	amtIn := decimal.NewFromBigInt(amountIn, -m.cfg.TokenInDec)
 	amtOut := pq.Price.Mul(decimal.NewFromFloat(1).Div(decimal.New(1, m.cfg.TokenOutDec)))
 
@@ -256,7 +256,7 @@ func (m *Manager) checkCexBuyDexSell(ctx context.Context, blockNum *big.Int, ob 
 	}
 }
 
-func (m *Manager) checkDexBuyCexSell(ctx context.Context, blockNum *big.Int, ob *domain.OrderBook, amountOut *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) {
+func (m *Manager) checkDexBuyCexSell(blockNum *big.Int, ob *domain.OrderBook, amountOut *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) {
 	ethAmount := decimal.NewFromBigInt(amountOut, -m.cfg.TokenInDec)
 	usdcIn := pq.Price.Mul(decimal.NewFromFloat(1).Div(decimal.New(1, m.cfg.TokenOutDec)))
 

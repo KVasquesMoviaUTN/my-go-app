@@ -58,8 +58,8 @@ func (l *Listener) SubscribeNewHeads(ctx context.Context) (<-chan *domain.Block,
 				}
 
 				if l.lastBlock != nil {
-					head, err := client.HeaderByNumber(ctx, nil)
-					if err == nil && head.Number.Cmp(l.lastBlock) > 0 {
+					head, headErr := client.HeaderByNumber(ctx, nil)
+					if headErr == nil && head.Number.Cmp(l.lastBlock) > 0 {
 						start := new(big.Int).Add(l.lastBlock, big.NewInt(1))
 						end := head.Number
 
