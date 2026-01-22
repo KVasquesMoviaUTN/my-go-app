@@ -39,9 +39,9 @@ func TestCalculateEffectivePrice(t *testing.T) {
 			expectedOk:    true,
 		},
 		{
-			name:          "Buy 1.5 ETH (Partial fill 1st level, partial 2nd)",
-			side:          "buy",
-			amount:        decimal.NewFromFloat(1.5),
+			name:   "Buy 1.5 ETH (Partial fill 1st level, partial 2nd)",
+			side:   "buy",
+			amount: decimal.NewFromFloat(1.5),
 			// Cost: 1.0 * 100 + 0.5 * 101 = 100 + 50.5 = 150.5
 			// Price: 150.5 / 1.5 = 100.3333...
 			expectedPrice: decimal.NewFromFloat(150.5).Div(decimal.NewFromFloat(1.5)),

@@ -69,7 +69,6 @@ func (e *Engine) Run(ctx context.Context) error {
 		}
 	}()
 
-
 	go func() {
 		port := os.Getenv("PORT")
 		if port == "" {
@@ -77,7 +76,6 @@ func (e *Engine) Run(ctx context.Context) error {
 		}
 		e.notifier.Start(":" + port)
 	}()
-
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

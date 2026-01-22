@@ -62,7 +62,7 @@ func TestGetQuote(t *testing.T) {
 	// Assertions
 	assert.NoError(t, err)
 	assert.NotNil(t, quote)
-	
+
 	// Check Price (AmountOut)
 	expectedPrice := decimal.NewFromInt(2000000000)
 	assert.True(t, quote.Price.Equal(expectedPrice), "Price mismatch")

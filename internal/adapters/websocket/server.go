@@ -30,14 +30,14 @@ func NewServer() *Server {
 
 func (s *Server) Start(addr string) {
 	http.HandleFunc("/ws", s.handleConnections)
-	
+
 	go s.handleMessages()
 
 	slog.Info("WebSocket server starting", "addr", addr)
-	
+
 	// Wrap the default mux with CORS middleware
 	handler := corsMiddleware(http.DefaultServeMux)
-	
+
 	if err := http.ListenAndServe(addr, handler); err != nil {
 		slog.Error("WebSocket server failed", "error", err)
 	}
@@ -88,7 +88,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleMessages() {
 	for {
 		msg := <-s.broadcast
-		
+
 		s.mu.RLock()
 		for client := range s.clients {
 			err := client.WriteJSON(msg)

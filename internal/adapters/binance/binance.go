@@ -50,7 +50,6 @@ type depthResponse struct {
 	Asks         [][]string `json:"asks"`
 }
 
-
 func (a *Adapter) GetOrderBook(ctx context.Context, symbol string) (*domain.OrderBook, error) {
 	if err := a.limiter.Wait(ctx); err != nil {
 		return nil, fmt.Errorf("rate limiter wait failed: %w", err)

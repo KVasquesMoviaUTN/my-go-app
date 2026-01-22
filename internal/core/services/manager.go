@@ -28,18 +28,17 @@ type Config struct {
 	CacheDuration time.Duration
 }
 
-
 type Manager struct {
-	cfg        Config
-	cex        ports.ExchangeAdapter
-	dex        ports.PriceProvider
-	listener   ports.BlockchainListener
-	notifier   ports.NotificationService
-	
-	mu         sync.RWMutex
-	lastBlock  *big.Int
-	
-	sem        chan struct{}
+	cfg      Config
+	cex      ports.ExchangeAdapter
+	dex      ports.PriceProvider
+	listener ports.BlockchainListener
+	notifier ports.NotificationService
+
+	mu        sync.RWMutex
+	lastBlock *big.Int
+
+	sem chan struct{}
 }
 
 func NewManager(cfg Config, cex ports.ExchangeAdapter, dex ports.PriceProvider, listener ports.BlockchainListener, notifier ports.NotificationService) *Manager {
@@ -73,8 +72,8 @@ func (m *Manager) Start(ctx context.Context) error {
 			case m.sem <- struct{}{}:
 				observability.ActiveWorkers.Inc()
 				go func(b *domain.Block) {
-					defer func() { 
-						<-m.sem 
+					defer func() {
+						<-m.sem
 						observability.ActiveWorkers.Dec()
 					}()
 					m.processBlock(ctx, b)
@@ -106,9 +105,9 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 	m.mu.Unlock()
 
 	slog.Info("new block", "height", blockNum)
-	
+
 	slog.Info("new block", "height", blockNum)
-	
+
 	m.notifier.Broadcast(domain.ArbitrageEvent{
 		Type:        "HEARTBEAT",
 		BlockNumber: blockNum.Uint64(),
@@ -116,7 +115,7 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 	})
 
 	g, ctx := errgroup.WithContext(ctx)
-	
+
 	var ob *domain.OrderBook
 	var gasPrice *big.Int
 	var slot0 *domain.Slot0
@@ -150,12 +149,11 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 	})
 
 	type quoteResult struct {
-		amt        *big.Int
-		sellQuote  *domain.PriceQuote
-		buyQuote   *domain.PriceQuote
+		amt       *big.Int
+		sellQuote *domain.PriceQuote
+		buyQuote  *domain.PriceQuote
 	}
 	quoteResults := make([]quoteResult, len(m.cfg.TradeSizes))
-
 
 	if slot0 != nil && ob != nil && len(ob.Asks) > 0 {
 		slog.Info("Pre-flight check available", "slot0_tick", slot0.Tick)
@@ -168,7 +166,7 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 			if err != nil {
 				return fmt.Errorf("dex sell quote failed for size %s: %w", size, err)
 			}
-			
+
 			buyQ, err := m.dex.GetQuoteExactOutput(ctx, m.cfg.TokenOutAddr, m.cfg.TokenInAddr, size, m.cfg.PoolFee)
 			if err != nil {
 				return fmt.Errorf("dex buy quote failed for size %s: %w", size, err)
@@ -197,7 +195,7 @@ func (m *Manager) processBlock(ctx context.Context, block *domain.Block) {
 func (m *Manager) checkCexBuyDexSell(ctx context.Context, blockNum *big.Int, ob *domain.OrderBook, amountIn *big.Int, pq *domain.PriceQuote, gasPriceWei *big.Int) {
 	amtIn := decimal.NewFromBigInt(amountIn, -m.cfg.TokenInDec)
 	amtOut := pq.Price.Mul(decimal.NewFromFloat(1).Div(decimal.New(1, m.cfg.TokenOutDec)))
-	
+
 	dexPrice := amtOut.Div(amtIn)
 
 	cexPrice, ok := ob.CalculateEffectivePrice("buy", amtIn)
@@ -219,13 +217,12 @@ func (m *Manager) checkCexBuyDexSell(ctx context.Context, blockNum *big.Int, ob 
 
 	cexFee := decimal.NewFromFloat(0.001)
 	cexCost := cexPrice.Mul(amtIn).Mul(decimal.NewFromFloat(1).Add(cexFee))
-	
+
 	gasUsed := decimal.NewFromBigInt(pq.GasEstimate, 0)
-	
 
 	gasPriceEth := decimal.NewFromBigInt(gasPriceWei, -18)
 	gasCost := gasUsed.Mul(gasPriceEth).Mul(cexPrice)
-	
+
 	netDex := amtOut.Sub(gasCost)
 	profit := netDex.Sub(cexCost)
 
@@ -249,12 +246,12 @@ func (m *Manager) checkCexBuyDexSell(ctx context.Context, blockNum *big.Int, ob 
 			Direction:       "CEX -> DEX",
 		},
 	})
-	
+
 	if profit.GreaterThan(m.cfg.MinProfit) {
 		observability.ArbitrageOpsFound.Inc()
 		p, _ := profit.Float64()
 		observability.ArbitrageProfit.WithLabelValues("USDC").Add(p)
-		
+
 		m.printReport(amtIn, cexPrice, dexPrice, profit, "CEX -> DEX")
 	}
 }
@@ -271,7 +268,7 @@ func (m *Manager) checkDexBuyCexSell(ctx context.Context, blockNum *big.Int, ob 
 	}
 
 	spread := cexPrice.Sub(dexPrice).Div(dexPrice).Mul(decimal.NewFromFloat(100))
-	
+
 	slog.Info("Market analysis complete (DEX->CEX)",
 		"block", blockNum,
 		"binance_price", cexPrice.StringFixed(2),
@@ -280,10 +277,10 @@ func (m *Manager) checkDexBuyCexSell(ctx context.Context, blockNum *big.Int, ob 
 		"status", "no_opportunity",
 		"size", ethAmount.StringFixed(2),
 	)
-	
+
 	cexFee := decimal.NewFromFloat(0.001)
 	cexRevenue := cexPrice.Mul(ethAmount).Mul(decimal.NewFromFloat(1).Sub(cexFee))
-	
+
 	gasUsed := decimal.NewFromBigInt(pq.GasEstimate, 0)
 	gasPriceEth := decimal.NewFromBigInt(gasPriceWei, -18)
 	gasCost := gasUsed.Mul(gasPriceEth).Mul(cexPrice)
@@ -294,7 +291,7 @@ func (m *Manager) checkDexBuyCexSell(ctx context.Context, blockNum *big.Int, ob 
 		observability.ArbitrageOpsFound.Inc()
 		p, _ := profit.Float64()
 		observability.ArbitrageProfit.WithLabelValues("USDC").Add(p)
-		
+
 		m.printReport(ethAmount, cexPrice, dexPrice, profit, "DEX -> CEX")
 	}
 }

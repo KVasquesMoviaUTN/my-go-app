@@ -62,8 +62,6 @@ func TestEndToEndArbitrageFlow(t *testing.T) {
 	}))
 	defer binanceServer.Close()
 
-
-
 	ethServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			Method string        `json:"method"`
@@ -100,8 +98,6 @@ func TestEndToEndArbitrageFlow(t *testing.T) {
 	}))
 	defer ethServer.Close()
 
-
-
 	cexAdapter := binance.NewAdapter(binanceServer.URL)
 	dexAdapter, err := ethereum.NewAdapter(ethServer.URL)
 	assert.NoError(t, err)
@@ -109,13 +105,9 @@ func TestEndToEndArbitrageFlow(t *testing.T) {
 	mockListener := &MockBlockchainListener{}
 	mockNotifier := NewMockNotificationService()
 
-
-
 	blockChan := make(chan *domain.Block)
 	errChan := make(chan error)
 	mockListener.On("SubscribeNewHeads", testifyMock.Anything).Return((<-chan *domain.Block)(blockChan), (<-chan error)(errChan), nil)
-
-
 
 	cfg := services.Config{
 		Symbol:        "ETHUSDC",
@@ -132,8 +124,6 @@ func TestEndToEndArbitrageFlow(t *testing.T) {
 
 	manager := services.NewManager(cfg, cexAdapter, dexAdapter, mockListener, mockNotifier)
 
-
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -141,8 +131,6 @@ func TestEndToEndArbitrageFlow(t *testing.T) {
 		err := manager.Start(ctx)
 		assert.NoError(t, err)
 	}()
-
-
 
 	time.Sleep(100 * time.Millisecond)
 
@@ -169,7 +157,7 @@ func TestEndToEndArbitrageFlow(t *testing.T) {
 				assert.Equal(t, "CEX -> DEX", event.Data.Direction)
 				assert.Greater(t, event.Data.SpreadPct, 0.0)
 				assert.Greater(t, event.Data.EstimatedProfit, 0.0)
-				
+
 				goto Done
 			}
 		case <-timeout:

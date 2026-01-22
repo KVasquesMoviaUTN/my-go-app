@@ -62,7 +62,7 @@ func (l *Listener) SubscribeNewHeads(ctx context.Context) (<-chan *domain.Block,
 					if err == nil && head.Number.Cmp(l.lastBlock) > 0 {
 						start := new(big.Int).Add(l.lastBlock, big.NewInt(1))
 						end := head.Number
-						
+
 						if new(big.Int).Sub(end, start).Cmp(big.NewInt(50)) > 0 {
 							start = new(big.Int).Sub(end, big.NewInt(50))
 						}
@@ -102,7 +102,7 @@ func (l *Listener) SubscribeNewHeads(ctx context.Context) (<-chan *domain.Block,
 				backoff = time.Second
 				fmt.Println("ws connected")
 
-				connLoop:
+			connLoop:
 				for {
 					if !timer.Stop() {
 						select {

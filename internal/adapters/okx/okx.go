@@ -43,9 +43,9 @@ type okxData struct {
 
 func (a *Adapter) GetOrderBook(ctx context.Context, symbol string) (*domain.OrderBook, error) {
 	okxSymbol := convertToOKXSymbol(symbol)
-	
+
 	url := fmt.Sprintf("%s/api/v5/market/books?instId=%s&sz=100", BaseURL, okxSymbol)
-	
+
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -102,7 +102,7 @@ func (a *Adapter) GetOrderBook(ctx context.Context, symbol string) (*domain.Orde
 			continue
 		}
 		orderBook.Asks = append(orderBook.Asks, domain.PriceLevel{
-			Price:    price,
+			Price:  price,
 			Amount: quantity,
 		})
 	}
@@ -120,7 +120,7 @@ func (a *Adapter) GetOrderBook(ctx context.Context, symbol string) (*domain.Orde
 			continue
 		}
 		orderBook.Bids = append(orderBook.Bids, domain.PriceLevel{
-			Price:    price,
+			Price:  price,
 			Amount: quantity,
 		})
 	}

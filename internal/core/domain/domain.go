@@ -23,7 +23,6 @@ type Slot0 struct {
 	Tick         *big.Int
 }
 
-
 func (ob *OrderBook) CalculateEffectivePrice(side string, amount decimal.Decimal) (decimal.Decimal, bool) {
 	var levels []PriceLevel
 	if side == "buy" {
@@ -40,11 +39,11 @@ func (ob *OrderBook) CalculateEffectivePrice(side string, amount decimal.Decimal
 		if fill.GreaterThan(remaining) {
 			fill = remaining
 		}
-		
+
 		cost := fill.Mul(level.Price)
 		totalCost = totalCost.Add(cost)
 		remaining = remaining.Sub(fill)
-		
+
 		if remaining.IsZero() {
 			break
 		}
@@ -63,18 +62,18 @@ type PriceLevel struct {
 }
 
 type PriceQuote struct {
-	Price     decimal.Decimal
+	Price       decimal.Decimal
 	GasEstimate *big.Int
-	Timestamp time.Time
+	Timestamp   time.Time
 }
 
 type ArbitrageOpportunity struct {
-	BuyOn      string
-	SellOn     string
-	BuyPrice   decimal.Decimal
-	SellPrice  decimal.Decimal
-	Profit     decimal.Decimal
-	Timestamp  time.Time
+	BuyOn     string
+	SellOn    string
+	BuyPrice  decimal.Decimal
+	SellPrice decimal.Decimal
+	Profit    decimal.Decimal
+	Timestamp time.Time
 }
 
 type TradeData struct {

@@ -17,9 +17,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-
 const QuoterV2Address = "0x61fFE014bA17989E743c5F6cB21bF9697530B21e"
-
 
 const quoterABI = `[{"inputs":[{"components":[{"internalType":"address","name":"tokenIn","type":"address"},{"internalType":"address","name":"tokenOut","type":"address"},{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"uint24","name":"fee","type":"uint24"},{"internalType":"uint160","name":"sqrtPriceLimitX96","type":"uint160"}],"internalType":"struct IQuoterV2.QuoteExactInputSingleParams","name":"params","type":"tuple"}],"name":"quoteExactInputSingle","outputs":[{"internalType":"uint256","name":"amountOut","type":"uint256"},{"internalType":"uint160","name":"sqrtPriceX96After","type":"uint160"},{"internalType":"uint32","name":"initializedTicksCrossed","type":"uint32"},{"internalType":"uint256","name":"gasEstimate","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"components":[{"internalType":"address","name":"tokenIn","type":"address"},{"internalType":"address","name":"tokenOut","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint24","name":"fee","type":"uint24"},{"internalType":"uint160","name":"sqrtPriceLimitX96","type":"uint160"}],"internalType":"struct IQuoterV2.QuoteExactOutputSingleParams","name":"params","type":"tuple"}],"name":"quoteExactOutputSingle","outputs":[{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"uint160","name":"sqrtPriceX96After","type":"uint160"},{"internalType":"uint32","name":"initializedTicksCrossed","type":"uint32"},{"internalType":"uint256","name":"gasEstimate","type":"uint256"}],"stateMutability":"nonpayable","type":"function"}]`
 
@@ -27,7 +25,7 @@ type Adapter struct {
 	client    *ethclient.Client
 	parsedABI abi.ABI
 	poolCache sync.Map
-	
+
 	gasMu     sync.Mutex
 	gasPrice  *big.Int
 	gasExpiry time.Time
@@ -49,7 +47,6 @@ func NewAdapter(clientURL string) (ports.PriceProvider, error) {
 		parsedABI: parsed,
 	}, nil
 }
-
 
 type QuoteExactInputSingleParams struct {
 	TokenIn           common.Address
@@ -75,12 +72,10 @@ func (a *Adapter) GetQuote(ctx context.Context, tokenIn, tokenOut string, amount
 		SqrtPriceLimitX96: big.NewInt(0),
 	}
 
-
 	data, err := a.parsedABI.Pack("quoteExactInputSingle", params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack data: %w", err)
 	}
-
 
 	toAddr := common.HexToAddress(QuoterV2Address)
 	msg := ethereum.CallMsg{
@@ -88,20 +83,15 @@ func (a *Adapter) GetQuote(ctx context.Context, tokenIn, tokenOut string, amount
 		Data: data,
 	}
 
-
 	result, err := a.client.CallContract(ctx, msg, nil)
 	if err != nil {
 		return nil, fmt.Errorf("eth_call failed: %w", err)
 	}
 
-
-
-
 	unpacked, err := a.parsedABI.Unpack("quoteExactInputSingle", result)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unpack result: %w", err)
 	}
-
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to unpack result: %w", err)
@@ -114,16 +104,12 @@ func (a *Adapter) GetQuote(ctx context.Context, tokenIn, tokenOut string, amount
 	amountOut := unpacked[0].(*big.Int)
 	gasEstimate := unpacked[3].(*big.Int)
 
-
-	
-
-	
 	amountOutDec := decimal.NewFromBigInt(amountOut, 0)
-	
+
 	return &domain.PriceQuote{
-		Price:     amountOutDec,
+		Price:       amountOutDec,
 		GasEstimate: gasEstimate,
-		Timestamp: time.Now(),
+		Timestamp:   time.Now(),
 	}, nil
 }
 
@@ -197,12 +183,9 @@ func (a *Adapter) GetGasPrice(ctx context.Context) (*big.Int, error) {
 	return price, nil
 }
 
-
 const FactoryAddress = "0x1F98431c8aD98523631AE4a59f267346ea31F984"
 
-
 const factoryABI = `[{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"},{"internalType":"uint24","name":"","type":"uint24"}],"name":"getPool","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"}]`
-
 
 const poolABI = `[{"inputs":[],"name":"slot0","outputs":[{"internalType":"uint160","name":"sqrtPriceX96","type":"uint160"},{"internalType":"int24","name":"tick","type":"int24"},{"internalType":"uint16","name":"observationIndex","type":"uint16"},{"internalType":"uint16","name":"observationCardinality","type":"uint16"},{"internalType":"uint16","name":"observationCardinalityNext","type":"uint16"},{"internalType":"uint8","name":"feeProtocol","type":"uint8"},{"internalType":"bool","name":"unlocked","type":"bool"}],"stateMutability":"view","type":"function"}]`
 
@@ -252,12 +235,12 @@ func (a *Adapter) GetSlot0(ctx context.Context, tokenIn, tokenOut string, fee in
 
 func (a *Adapter) getPoolAddress(ctx context.Context, tokenIn, tokenOut string, fee int64) (common.Address, error) {
 	t0, t1 := common.HexToAddress(tokenIn), common.HexToAddress(tokenOut)
-	
+
 	key := fmt.Sprintf("%s-%s-%d", t0.Hex(), t1.Hex(), fee)
 	if val, ok := a.poolCache.Load(key); ok {
 		return val.(common.Address), nil
 	}
-	
+
 	parsed, err := abi.JSON(strings.NewReader(factoryABI))
 	if err != nil {
 		return common.Address{}, fmt.Errorf("failed to parse factory ABI: %w", err)
@@ -285,7 +268,7 @@ func (a *Adapter) getPoolAddress(ctx context.Context, tokenIn, tokenOut string, 
 	}
 
 	poolAddr := unpacked[0].(common.Address)
-	
+
 	if poolAddr == (common.Address{}) {
 		return common.Address{}, fmt.Errorf("pool not found")
 	}

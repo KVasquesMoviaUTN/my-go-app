@@ -15,7 +15,7 @@ import (
 func TestServer_Broadcast(t *testing.T) {
 	// Setup Server
 	server := NewServer()
-	
+
 	// Create test server
 	s := httptest.NewServer(http.HandlerFunc(server.handleConnections))
 	defer s.Close()

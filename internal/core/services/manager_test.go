@@ -37,7 +37,7 @@ func TestManager_ProcessBlock(t *testing.T) {
 
 	// Test Data
 	amountIn := cfg.TradeSizes[0] // 1 ETH
-	
+
 	// CEX OrderBook: Ask 2000 USDC
 	ob := &domain.OrderBook{
 		Timestamp: time.Now(),
@@ -51,18 +51,18 @@ func TestManager_ProcessBlock(t *testing.T) {
 	// 2050 * 10^6 = 2050000000
 	amountOut := big.NewInt(2050000000)
 	gasEstimate := big.NewInt(100000) // 100k gas
-	
+
 	pq := &domain.PriceQuote{
-		Price:     decimal.NewFromBigInt(amountOut, 0),
+		Price:       decimal.NewFromBigInt(amountOut, 0),
 		GasEstimate: gasEstimate,
-		Timestamp: time.Now(),
+		Timestamp:   time.Now(),
 	}
 
 	// Expectations
 	mockCEX.On("GetOrderBook", mock.Anything, "ETHUSDC").Return(ob, nil)
 	mockDEX.On("GetQuote", mock.Anything, "0xWETH", "0xUSDC", amountIn, int64(3000)).Return(pq, nil)
 	mockDEX.On("GetQuoteExactOutput", mock.Anything, "0xUSDC", "0xWETH", amountIn, int64(3000)).Return(pq, nil) // Just reuse pq for simplicity, though technically incorrect for buy
-	mockDEX.On("GetGasPrice", mock.Anything).Return(big.NewInt(30000000000), nil) // 30 gwei
+	mockDEX.On("GetGasPrice", mock.Anything).Return(big.NewInt(30000000000), nil)                               // 30 gwei
 	mockDEX.On("GetSlot0", mock.Anything, "0xWETH", "0xUSDC", int64(3000)).Return(&domain.Slot0{SqrtPriceX96: big.NewInt(0), Tick: big.NewInt(0)}, nil)
 	var capturedEvent domain.ArbitrageEvent
 	mockNotifier.On("Broadcast", mock.MatchedBy(func(e domain.ArbitrageEvent) bool {
@@ -77,13 +77,13 @@ func TestManager_ProcessBlock(t *testing.T) {
 	// However, for unit testing logic, it's better to test the logic method if possible.
 	// But `checkArbitrageForSize` is private.
 	// We can trigger `Start` and send a block to the channel.
-	
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	blockChan := make(chan *domain.Block)
 	errChan := make(chan error)
-	
+
 	mockListener.On("SubscribeNewHeads", ctx).Return((<-chan *domain.Block)(blockChan), (<-chan error)(errChan), nil)
 
 	// Run Manager in goroutine
@@ -108,7 +108,7 @@ func TestManager_ProcessBlock(t *testing.T) {
 	if capturedEvent.Type != "OPPORTUNITY" {
 		t.Errorf("Expected OPPORTUNITY event, got %s", capturedEvent.Type)
 	}
-	
+
 	if capturedEvent.Data == nil {
 		t.Fatal("Event data is nil")
 	}
@@ -126,7 +126,7 @@ func TestManager_ProcessBlock(t *testing.T) {
 	// Gas: 100,000 * 30 Gwei = 0.003 ETH
 	// Gas Cost in USDC: 0.003 * 2000 = 6 USDC
 	// Net Profit: 50 - 2 - 6 = 42 USDC
-	
+
 	expectedProfit := 42.0
 	// Allow small floating point error
 	if diff := capturedEvent.Data.EstimatedProfit - expectedProfit; diff > 0.01 || diff < -0.01 {

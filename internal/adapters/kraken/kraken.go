@@ -41,9 +41,9 @@ type krakenDepth struct {
 
 func (a *Adapter) GetOrderBook(ctx context.Context, symbol string) (*domain.OrderBook, error) {
 	krakenSymbol := convertToKrakenSymbol(symbol)
-	
+
 	url := fmt.Sprintf("%s/0/public/Depth?pair=%s&count=100", BaseURL, krakenSymbol)
-	
+
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -100,7 +100,7 @@ func (a *Adapter) GetOrderBook(ctx context.Context, symbol string) (*domain.Orde
 			continue
 		}
 		orderBook.Asks = append(orderBook.Asks, domain.PriceLevel{
-			Price:    price,
+			Price:  price,
 			Amount: quantity,
 		})
 	}
@@ -118,7 +118,7 @@ func (a *Adapter) GetOrderBook(ctx context.Context, symbol string) (*domain.Orde
 			continue
 		}
 		orderBook.Bids = append(orderBook.Bids, domain.PriceLevel{
-			Price:    price,
+			Price:  price,
 			Amount: quantity,
 		})
 	}
