@@ -72,9 +72,9 @@ func (l *Listener) SubscribeNewHeads(ctx context.Context) (<-chan *domain.Block,
 								l.logError(errChan, fmt.Errorf("rate limiter wait failed: %w", limitErr))
 								break
 							}
-							block, err := client.BlockByNumber(ctx, i)
-							if err != nil {
-								l.logError(errChan, fmt.Errorf("backfill failed for block %s: %w", i, err))
+							block, blockErr := client.BlockByNumber(ctx, i)
+							if blockErr != nil {
+								l.logError(errChan, fmt.Errorf("backfill failed for block %s: %w", i, blockErr))
 								continue
 							}
 							out <- &domain.Block{
