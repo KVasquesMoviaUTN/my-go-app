@@ -14,9 +14,14 @@ export default function LiveFeed() {
 						<Zap className="w-4 h-4 text-emerald-400" />
 						<h2 className="text-sm font-bold text-white uppercase tracking-wider">Live Opportunities</h2>
 					</div>
-					<span className="text-xs text-slate-400 font-mono bg-slate-800/50 px-2 py-1 rounded">
-						{events.length} events
-					</span>
+					<div className="flex items-center gap-3">
+						<span className="text-xs text-slate-400 font-mono bg-slate-800/50 px-2 py-1 rounded">
+							Last Block: #{useStore(state => state.lastBlock)}
+						</span>
+						<span className="text-xs text-slate-400 font-mono bg-slate-800/50 px-2 py-1 rounded">
+							{events.length} events
+						</span>
+					</div>
 				</div>
 			</div>
 
