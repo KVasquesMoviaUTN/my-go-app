@@ -88,7 +88,7 @@ func TestManager_ProcessBlock(t *testing.T) {
 
 	// Run Manager in goroutine
 	go func() {
-		manager.Start(ctx)
+		_ = manager.Start(ctx)
 	}()
 
 	// Send a block
